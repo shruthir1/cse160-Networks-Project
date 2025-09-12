@@ -1,11 +1,12 @@
 #include<Timer.h>
 
-generic modile NeighnorDiscoverP(){
+generic module NeighborDiscoverP(){
     provides interface NeighborDiscovery;
 
     use interface Timer<TMilli> as neighborTimer;
     uses interface Random;
 }
+
 
 implementation {
 
