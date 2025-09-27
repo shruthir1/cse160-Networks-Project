@@ -1,6 +1,6 @@
-#include "../../imcludes/am_types.h"
+#include "../../includes/am_types.h"
 
-genetic configuration NeighborDiscovery(int channel){
+generic configuration NeighborDiscovery(int channel){
     provides interface NeighborDiscovery;
 }
 
