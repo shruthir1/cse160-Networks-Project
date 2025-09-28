@@ -12,6 +12,7 @@
 #include "includes/CommandMsg.h"
 #include "includes/sendInfo.h"
 #include "includes/channels.h"
+#include "lib/modules/NeighborDiscoveryC.nc"
 
 module Node{
    uses interface Boot;
@@ -22,6 +23,8 @@ module Node{
    uses interface SimpleSend as Sender;
 
    uses interface CommandHandler;
+   uses interface NeighborDiscovery;
+   uses interface NeighborDiscoveryC;
 }
 
 implementation{
@@ -32,6 +35,7 @@ implementation{
 
    event void Boot.booted(){
       call AMControl.start();
+      call NeighborDiscovery.start();
 
       dbg(GENERAL_CHANNEL, "Booted\n");
    }

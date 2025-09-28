@@ -1,27 +1,24 @@
 #include <Timer.h> 
 #include "includes/packet.h"
+#include "am_types.h"
 
-generic configuration FloodingC {
-    provides interface Flooding;
-    uses interface SimpleSend;
+configuration FloodingC{
+	provides interface SimpleSend;
+	provides interface Receive as MainReceive;
+	provides interface Receive as ReplyReceive;
 }
-implementation {
-    components FloodingP;
 
-    Flooding = FloodingP.Flooding;
-    components new TimerMilliC() as fTimer;
-    FloodingP.fTimer -> fTimer;
-
-   
-    components RandomC as Random;
-    FloodingP.Random -> Random;
-
-    components ActiveMessageC as AM; 
-    FloodingP.AMControl -> AM
-    FloodingP.Receive -> AM.Receive
-
-    Receive = FloodingP.Receive;
-    SimpleSend = FloodingP.SimpleSend;
-
-
-  }
+implementation{
+	components FloodingP;
+	components new SimpleSendC(AM_FLOODING);
+	components new AMReceiverC(AM_FLOODING);
+	
+	// Wire Internal Components
+	FloodingP.InternalSender -> SimpleSendC;
+	FloodingP.InternalReceiver -> AMReceiverC;
+	
+	// Provide External Interfaces.
+	MainReceive = FloodingP.MainReceive;
+	ReplyReceive = FloodingP.ReplyReceive;
+	SimpleSend = FloodingP.FloodSender;
+}

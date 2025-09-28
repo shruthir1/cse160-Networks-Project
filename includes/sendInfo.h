@@ -13,6 +13,6 @@ typedef struct sendInfo{
 	pack packet;
 	uint16_t src;
 	uint16_t dest;
-}sendInfo;
+} sendInfo;
 
 #endif /* PACK_BUFFER_H */

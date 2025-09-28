@@ -10,13 +10,19 @@
 #include <Timer.h>
 #include "includes/CommandMsg.h"
 #include "includes/packet.h"
+#include "lib/modules/NeighborDiscoveryC.nc"
 
 configuration NodeC{
+    uses interface NeighborDiscovery;
 }
+
 implementation {
     components MainC;
     components Node;
     components new AMReceiverC(AM_PACK) as GeneralReceive;
+    components NeighborDiscoveryC;
+
+    Node.NeighborDiscovery -> NeighborDiscoveryC.NeighborDiscovery;
 
     Node -> MainC.Boot;
 
