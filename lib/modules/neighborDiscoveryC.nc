@@ -11,7 +11,7 @@ implementation{
 	components NeighborDiscoveryP;
     // we use "new" when we dont want a global instance of the component 
     //these componenets will create seperate instasnces for each communication endpoint without interfering w one another 
-	components new TimerMilliC() as timer; //timer for when messages are fired 
+	components new TimerMilliC() as beaconTimer;; //timer for when messages are fired 
 	components new SimpleSendC(AM_NEIGHBOR) as ssc; //this line is binding an AM id to the sender 
 	components new AMReceiverC(AM_NEIGHBOR) as rc; //this line is binding an AM id to the reciver
     // ^^ by binding these am id's to sender and reciver the purpose of the packet send becomes clear
@@ -23,5 +23,5 @@ implementation{
     //connecting the interfaces we are going to use in the P file to the components we declared here 
 	NeighborDiscoveryP.SimpleSend -> ssc;
 	NeighborDiscoveryP.Receive -> rc;
-	NeighborDiscoveryP.timer -> timer;
+	NeighborDiscoveryP.timer -> beaconTimer;
 }

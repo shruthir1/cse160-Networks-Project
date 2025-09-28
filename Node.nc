@@ -12,7 +12,6 @@
 #include "includes/CommandMsg.h"
 #include "includes/sendInfo.h"
 #include "includes/channels.h"
-#include "lib/modules/NeighborDiscoveryC.nc"
 
 module Node{
    uses interface Boot;
@@ -24,7 +23,7 @@ module Node{
 
    uses interface CommandHandler;
    uses interface NeighborDiscovery;
-   uses interface NeighborDiscoveryC;
+   //uses interface NeighborDiscoveryC;
 }
 
 implementation{
