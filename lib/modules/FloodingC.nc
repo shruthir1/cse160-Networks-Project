@@ -1,6 +1,5 @@
-#include <Timer.h> 
-#include "includes/packet.h"
-#include "am_types.h"
+// Configuration
+#define AM_FLOODING 79
 
 configuration FloodingC{
 	provides interface SimpleSend;
@@ -13,11 +12,11 @@ implementation{
 	components new SimpleSendC(AM_FLOODING);
 	components new AMReceiverC(AM_FLOODING);
 	
-	// Wire Internal Components
+
 	FloodingP.InternalSender -> SimpleSendC;
 	FloodingP.InternalReceiver -> AMReceiverC;
 	
-	// Provide External Interfaces.
+
 	MainReceive = FloodingP.MainReceive;
 	ReplyReceive = FloodingP.ReplyReceive;
 	SimpleSend = FloodingP.FloodSender;
