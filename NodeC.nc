@@ -13,6 +13,7 @@ implementation {
 
     // Neighbor discovery components
     components NeighborDiscoveryC;
+    components FloodingC;
 
     Node -> MainC.Boot;
 
@@ -26,4 +27,5 @@ implementation {
 
     // FIXED: Wire Node to neighbor discovery with specific interface
     Node.NeighborDiscovery -> NeighborDiscoveryC.NeighborDiscovery;
+    //Node.Flooding -> FloodingC.Flooding;
 }

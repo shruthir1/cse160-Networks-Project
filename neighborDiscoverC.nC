@@ -5,11 +5,13 @@ generic configuration NeighborDiscovery(int channel){
 }
 
 implementation{
-    components new NeighborDiscoverP();
+
+    components new NeighborDiscoverP(); //creating a linkage to P file
     NeighborDiscovery = NeighborDiscoveryP.NeighborDiscovery;
 
+    //connecting private timer in P file to timer
     components new TimerMilliC() as neighborTimer;
-    NeighborDiscoveryP.neighborTimer -> neighborTimer;
+    NeighborDiscoveryP.neighborTimer -> neighborTimer; 
 
     components RandomC as Random
     NeighborDiscoveryP.Random -> Random;

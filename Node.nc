@@ -38,6 +38,7 @@ implementation {
         
         // Start neighbor discovery
         call NeighborDiscovery.start();
+        //call Flooding.start();
         
         // ADD ANOTHER DEBUG MESSAGE
         dbg(GENERAL_CHANNEL, "Node %d: Neighbor discovery start() called\n", TOS_NODE_ID);
