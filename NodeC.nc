@@ -1,7 +1,3 @@
-/*
- * NodeC wiring
- */
-
 configuration NodeC { }
 implementation {
     components MainC;
@@ -13,7 +9,6 @@ implementation {
 
     // Neighbor discovery components
     components NeighborDiscoveryC;
-    components FloodingC;
 
     Node -> MainC.Boot;
 
@@ -25,7 +20,6 @@ implementation {
 
     Node.CommandHandler -> CommandHandlerC;
 
-    // FIXED: Wire Node to neighbor discovery with specific interface
+    // Wire Node to neighbor discovery with specific interface
     Node.NeighborDiscovery -> NeighborDiscoveryC.NeighborDiscovery;
-    //Node.Flooding -> FloodingC.Flooding;
 }

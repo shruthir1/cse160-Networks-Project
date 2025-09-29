@@ -1,3 +1,4 @@
+
 //we will be sending packets over channels so we need these header files
 #include "../../includes/channels.h"
 #include "../../includes/packet.h"
@@ -6,7 +7,6 @@
 
 module FloodingP {
     //external interfaces  (exisits outside of module and we're using here)
-    //provides interface Flooding;
     provides interface SimpleSend as FloodSender; //for sending packets
     provides interface Receive as MainReceive;   //for recieivng ping packets  
     provides interface Receive as ReplyReceive; //for recieving ping REPLY packets 
@@ -26,9 +26,6 @@ implementation {
     uint16_t seen_seq[MAX_HISTORY]; //all the sequence numbers we've seen -> this way we can find if packet missing as well  
     uint8_t history_count = 0; //how much history we've already recorded
 
-      command void Flooding.start() {
-        // call beaconTimer.startPeriodic(BEACON_PERIOD); //start the timer when program starts
-    }
     //to check if we've seen before we need to see the source and the sequence number, if these both exist in our table, we have a packet weve already processed. 
     bool seenBefore(uint16_t src, uint16_t s) {
         uint8_t i;  
