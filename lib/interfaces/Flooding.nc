@@ -1,3 +1,3 @@
 // interface Flooding{
-// 	Flooding.start();
+// 	command void start ();
 // }

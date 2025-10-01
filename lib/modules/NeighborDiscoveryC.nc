@@ -10,9 +10,10 @@ implementation {
     components new SimpleSendC(AM_PACK) as ssc; //to send packets
     components new AMReceiverC(AM_PACK) as rc; //to recieve ping when connection is established 
 
-    NeighborDiscovery = NeighborDiscoveryP.NeighborDiscovery; //wiring this interface to P interface 
+    NeighborDiscovery = NeighborDiscoveryP.NeighborDiscovery; //allows us to wire to the nodes 
 
     NeighborDiscoveryP.SimpleSend -> ssc; //wiring the sending configurations between the P and C files
     NeighborDiscoveryP.Receive -> rc; //wiring the recieving configurations between the P and C files 
     NeighborDiscoveryP.beaconTimer -> beaconTimer; //connecting the timers 
+
 }

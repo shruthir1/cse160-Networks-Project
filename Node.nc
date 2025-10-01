@@ -19,7 +19,6 @@ module Node {
     uses interface SimpleSend as Sender;
     uses interface CommandHandler;
 
-    // 👇 add this so Node can use NeighborDiscovery
     uses interface NeighborDiscovery;
 }
 
@@ -38,6 +37,7 @@ implementation {
         
         // Start neighbor discovery
         call NeighborDiscovery.start();
+        // call Flooding.simpleSend();
         
         // ADD ANOTHER DEBUG MESSAGE
         dbg(GENERAL_CHANNEL, "Node %d: Neighbor discovery start() called\n", TOS_NODE_ID);
