@@ -1,7 +1,7 @@
 //we will be sending packets over channels so we need these header files
 #include "../../includes/channels.h"
 #include "../../includes/packet.h"
-
+#define FLOODING_CHANNEL "flooding"
 #define MAX_HISTORY 50   // store recent (src,seq) pairs to prevent loops, but we dont want to store it too many times
 
 module FloodingP {
@@ -61,13 +61,16 @@ implementation {
         }
     }
 
+    //sending a flooding packet 
     command error_t FloodSender.send(pack msg, uint16_t dest) {
         msg.src = TOS_NODE_ID; // this is the source node
         msg.dest = dest; // we input the destination node 
         msg.seq = seq++; //as we send packets the sequence should increment 
         msg.TTL = 10; // initial TTL
-        //this will 
-        dbg(FLOODING_CHANNEL, "Sending Flood");
+         
+        dbg(FLOODING_CHANNEL, "Node %d FLOODING to dest=%d", 
+        TOS_NODE_ID, dest);
+        // dbg(FLOODING_CHANNEL, "Sending Flood");
         //broadcast packet to all neighbors 
         return call InternalSender.send(msg, AM_BROADCAST_ADDR);
     }
@@ -83,12 +86,12 @@ implementation {
         //extract payload/message from the packet we recieved 
         p = (pack*) payload;
 
-        //printing what we received (?)
-        dbg(FLOODING_CHANNEL, "Received packet\n");
+        //printing if packet was recieved bc we extracted payload
+        dbg(FLOODING_CHANNEL, "Flooding packet recieved! message: %s\n\n", p->payload);
 
         // Drop packet if already seen (avoiding duplicates)
         if (seenBefore(p->src, p->seq)) {
-            dbg(FLOODING_CHANNEL, "Already seen, dropping.\n");
+            // dbg(FLOODING_CHANNEL, "Already seen, dropping.\n");
             return msg;
         }
         //if we havent seen packet before, then record source and sequence 
@@ -96,29 +99,32 @@ implementation {
 
         // Drop if TTL expired
         if (p->TTL == 0) {
-            dbg(FLOODING_CHANNEL, "dropping.\n");
+            // dbg(FLOODING_CHANNEL, "dropping.\n");
             return msg;
         }
 
+        dbg(FLOODING_CHANNEL, " Ping from %d \n", 
+         TOS_NODE_ID, p->src);
         // If final destination is this node 
-        if (p->dest == TOS_NODE_ID) {
-            //if this is a packet we received that we do not need to send a reply to, receive packet 
-            if (p->protocol == PROTOCOL_PING) {  // Use PROTOCOL_PING instead of PING
-                dbg(FLOODING_CHANNEL, "Delivering\n");
-                signal MainReceive.receive(msg, payload, len);
-            } else if (p->protocol == PROTOCOL_PINGREPLY) {  // Use PROTOCOL_PINGREPLY
-               //if this is a packet we need to send a reply to, recieve the packet then send a reply 
-                dbg(FLOODING_CHANNEL, "Delivering\n");
-                signal ReplyReceive.receive(msg, payload, len);
-            }
-            return msg;
-        }
+if (p->dest == TOS_NODE_ID) {
+    // Print debug message when the packet reaches its destination
+    dbg("flooding", "Ping from %d to %d: %s\n", p->src, p->dest, p->payload);
+
+    //if this is a packet we received that we do not need to send a reply to, receive packet 
+    if (p->protocol == PROTOCOL_PING) {
+        signal MainReceive.receive(msg, payload, len);
+    } 
+    else if (p->protocol == PROTOCOL_PINGREPLY) {
+        signal ReplyReceive.receive(msg, payload, len);
+    }
+    return msg;
+}
 
         // Not final destination: forward because of flooding logic 
         // Create a copy of the packet to forward (don't modify original) to all neighbors 
         forward_msg = *p; // this is the packet we are forwarding
         forward_msg.TTL--; // after we send to our neighbors we used a hop
-        dbg(FLOODING_CHANNEL, "Forwarding packet\n");
+        // dbg(FLOODING_CHANNEL, "Forwarding packet\n");
         //send the packet
         call InternalSender.send(forward_msg, AM_BROADCAST_ADDR);
 

@@ -12,6 +12,8 @@
 
 configuration CommandHandlerC{
    provides interface CommandHandler;
+   // uses interface SimpleSend as Flooding;
+
 }
 
 implementation{
@@ -27,6 +29,11 @@ implementation{
    CommandHandlerP.Pool -> PoolC;
    CommandHandlerP.Queue -> QueueC;
 
-   components ActiveMessageC;
+   components ActiveMessageC;;
    CommandHandlerP.Packet -> ActiveMessageC;
+   
+    components FloodingC;
+    CommandHandlerP.Flooding -> FloodingC.SimpleSend;
+
+
 }

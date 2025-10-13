@@ -4,10 +4,8 @@ implementation {
     components Node;
     components new AMReceiverC(AM_PACK) as GeneralReceive;
     components ActiveMessageC;
-    components new SimpleSendC(AM_PACK);
     components CommandHandlerC;
 
-    
     components NeighborDiscoveryC;
     components FloodingC;
 
@@ -17,12 +15,10 @@ implementation {
 
     Node.AMControl -> ActiveMessageC;
 
-    Node.Sender -> SimpleSendC;
-
     Node.CommandHandler -> CommandHandlerC;
 
     Node.NeighborDiscovery -> NeighborDiscoveryC.NeighborDiscovery;
     
     Node.Sender -> FloodingC.SimpleSend;
-
 }
+

@@ -9,6 +9,8 @@
 #include "../../includes/CommandMsg.h"
 #include "../../includes/command.h"
 #include "../../includes/channels.h"
+#include "../../includes/packet.h"
+
 
 module CommandHandlerP{
    provides interface CommandHandler;
@@ -16,6 +18,7 @@ module CommandHandlerP{
    uses interface Pool<message_t>;
    uses interface Queue<message_t*>;
    uses interface Packet;
+   uses interface SimpleSend as Flooding;   
 }
 
 implementation{
@@ -52,6 +55,7 @@ implementation{
                 dbg(COMMAND_CHANNEL, "Command Type: Ping\n");
                 signal CommandHandler.ping(buff[0], &buff[1]);
                 break;
+            
 
             case CMD_NEIGHBOR_DUMP:
                 dbg(COMMAND_CHANNEL, "Command Type: Neighbor Dump\n");
@@ -98,3 +102,8 @@ implementation{
         return raw_msg;
     }
 }
+
+
+
+
+

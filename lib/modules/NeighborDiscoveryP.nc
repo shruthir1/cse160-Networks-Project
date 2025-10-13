@@ -28,9 +28,9 @@ implementation {
     command void NeighborDiscovery.print() {
         //dbg(NEIGHBOR_CHANNEL, "Current neighbors:\n");
         uint8_t i = 0;
-        // for ( i = 0; i < count; i++) {
-        //     dbg(NEIGHBOR_CHANNEL, "  Node %d (ttl=%d)\n", neighbors[i], timeouts[i]);
-        // }
+        for ( i = 0; i < count; i++) {
+            // dbg(NEIGHBOR_CHANNEL, "  Node %d (ttl=%d)\n", neighbors[i], timeouts[i]);
+        }
     }
 
 //when the timer is fired:
@@ -44,7 +44,7 @@ implementation {
         msg.dest = AM_BROADCAST_ADDR; //destination address 
         msg.protocol = PROTOCOL_PING; // use proper protocol instead of empty string (empty string was giving me bugs)
         msg.seq = 0; //sequence number (this way we know what # packet we are sending/recivieng) -> useful for detencing duplicates
-        strcpy(msg.payload, "Hellooo"); //set the payload 
+        strcpy(msg.payload, "From ND"); //setting the payload 
 
        // dbg(NEIGHBOR_CHANNEL, "sending beacon"); 
         call SimpleSend.send(msg, AM_BROADCAST_ADDR); //send the packet to neighbors
@@ -81,8 +81,8 @@ implementation {
         p = (pack*) payload;
 
         //we know we discovered a neighbor if the payload is the neighbor discovery message 
-        if (strcmp(p->payload, "Hellooo") == 0) {
-            dbg(NEIGHBOR_CHANNEL, "Received a beacon");
+        if (strcmp(p->payload, "From ND") == 0) {
+            // dbg(NEIGHBOR_CHANNEL, "Received a beacon");
 
             // After receiving packet Check if already in neighbor table (if it has same src address)
             found = FALSE; 
@@ -98,10 +98,10 @@ implementation {
             // If new neighbor found then add them into the table 
             if (!found && count < MAX_NEIGHBORS) {
                 neighbors[count] = p->src; //add the new neighbors source id 
-                timeouts[count] = TIMEOUT; //update TTL table 
+                timeouts[count] = TIMEOUT; //update how active the neighbor is 
                 count++; //increase # of neighbors we found 
                 //debug message that prints when the connection is made over neighbor channel 
-                dbg(NEIGHBOR_CHANNEL, "Added new neighbor");
+                // dbg(NEIGHBOR_CHANNEL, "Added new neighbor");
             }
         }
 
