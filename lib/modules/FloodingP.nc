@@ -31,28 +31,31 @@ implementation {
          //start the
     // }
     
+
     bool seenBefore(uint16_t src, uint16_t s) {
         uint8_t i;  
         for (i = 0; i < history_count; i++) {
             //if the packet we've recieved has matching src and sequence then we HAVE seen it before
-            if (seen_src[i] == src && seen_seq[i] == s) return TRUE;
+            if (seen_src[i] == src && seen_seq[i] == s){
+                return TRUE;
+            } 
         }
         return FALSE; //otherwise we have not seen it 
     }
 
 
-    //add the seen packet's source and sequence to our array of seen id's
+    //adding the packet's source and sequence to our array of seen id's
     void addHistory(uint16_t src, uint16_t s) {
-        uint8_t i;  // Declare variable at top for C89 compliance
+        uint8_t i;  
         
         if (history_count < MAX_HISTORY) {
             seen_src[history_count] = src; //add curr source address to table
             seen_seq[history_count] = s; //add curr sequence to table 
             history_count++;
         } else {
-            // overwrite oldest - shift array left IF table is full
+            // overwrite oldest - shift array left if table is full, we are wiping out the oldest value 
             for (i = 1; i < MAX_HISTORY; i++) {
-                seen_src[i-1] = seen_src[i]; //move to the left 
+                seen_src[i-1] = seen_src[i]; //moving everything to the left 
                 seen_seq[i-1] = seen_seq[i];
             }
             //after shifting add new values to the table 
@@ -63,6 +66,7 @@ implementation {
 
     //sending a flooding packet 
     command error_t FloodSender.send(pack msg, uint16_t dest) {
+       
         msg.src = TOS_NODE_ID; // this is the source node
         msg.dest = dest; // we input the destination node 
         msg.seq = seq++; //as we send packets the sequence should increment 
@@ -80,15 +84,19 @@ implementation {
         pack* p;    
         pack forward_msg;  // Create copy for forwarding
         
+        // dbg(FLOODING_CHANNEL, "Node %d: InternalReceiver.receive called, len=%d\n", 
+        // TOS_NODE_ID, len);
         //if packet size is not expected size then usually something is wrong and packet is dropped 
         if (len != sizeof(pack)) return msg; //we need to make sure the size of the packet matches the expected packet size 
         
         //extract payload/message from the packet we recieved 
         p = (pack*) payload;
-
-        //printing if packet was recieved bc we extracted payload
-        dbg(FLOODING_CHANNEL, "Flooding packet recieved! message: %s\n\n", p->payload);
-
+        
+        //avoid neighbor discovery pings
+        if(p->protocol != PROTOCOL_PING && p->protocol != PROTOCOL_PINGREPLY){
+             return msg;
+        }
+        
         // Drop packet if already seen (avoiding duplicates)
         if (seenBefore(p->src, p->seq)) {
             // dbg(FLOODING_CHANNEL, "Already seen, dropping.\n");
@@ -103,12 +111,17 @@ implementation {
             return msg;
         }
 
-        dbg(FLOODING_CHANNEL, " Ping from %d \n", 
-         TOS_NODE_ID, p->src);
+        dbg("flooding", "Ping from %d to %d: %s\n", p->src, p->dest, p->payload);
+
+
+    
+
+        // dbg(FLOODING_CHANNEL, " Ping from %d \n", 
+        //  TOS_NODE_ID, p->src);
         // If final destination is this node 
 if (p->dest == TOS_NODE_ID) {
     // Print debug message when the packet reaches its destination
-    dbg("flooding", "Ping from %d to %d: %s\n", p->src, p->dest, p->payload);
+    dbg("flooding", "Ping reached from %d to %d: %s\n", p->src, p->dest, p->payload);
 
     //if this is a packet we received that we do not need to send a reply to, receive packet 
     if (p->protocol == PROTOCOL_PING) {
@@ -120,10 +133,10 @@ if (p->dest == TOS_NODE_ID) {
     return msg;
 }
 
-        // Not final destination: forward because of flooding logic 
-        // Create a copy of the packet to forward (don't modify original) to all neighbors 
+        // Not final destination, forward because of flooding logic 
+        // Creating a copy of the packet to forward to all neighbors 
         forward_msg = *p; // this is the packet we are forwarding
-        forward_msg.TTL--; // after we send to our neighbors we used a hop
+        forward_msg.TTL--; // after we send to our neighbors we decrease TTL 
         // dbg(FLOODING_CHANNEL, "Forwarding packet\n");
         //send the packet
         call InternalSender.send(forward_msg, AM_BROADCAST_ADDR);

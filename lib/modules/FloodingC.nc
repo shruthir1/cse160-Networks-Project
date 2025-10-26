@@ -2,7 +2,7 @@
 
 configuration FloodingC{
 
-	provides interface SimpleSend;
+	provides interface SimpleSend as FloodSender;
 	provides interface Receive as MainReceive;
 	provides interface Receive as ReplyReceive;
 	// provides interface Flooding; 
@@ -20,6 +20,7 @@ implementation{
 	 
 	MainReceive = FloodingP.MainReceive;
 	ReplyReceive = FloodingP.ReplyReceive;
-	SimpleSend = FloodingP.FloodSender;
+	FloodSender = FloodingP.FloodSender;
 
 }
+

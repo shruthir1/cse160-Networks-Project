@@ -19,6 +19,6 @@ implementation {
 
     Node.NeighborDiscovery -> NeighborDiscoveryC.NeighborDiscovery;
     
-    Node.Sender -> FloodingC.SimpleSend;
+    Node.Sender -> FloodingC.FloodSender;
 }
 

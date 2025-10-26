@@ -29,7 +29,7 @@ implementation {
         //dbg(NEIGHBOR_CHANNEL, "Current neighbors:\n");
         uint8_t i = 0;
         for ( i = 0; i < count; i++) {
-            // dbg(NEIGHBOR_CHANNEL, "  Node %d (ttl=%d)\n", neighbors[i], timeouts[i]);
+            dbg(NEIGHBOR_CHANNEL, "  Node %d (ttl=%d)\n", neighbors[i], timeouts[i]);
         }
     }
 
@@ -42,7 +42,7 @@ implementation {
         // Broadcast a beacon packet this is from the table he shows in the video - APP layer
         msg.src = TOS_NODE_ID; //this nodes source address
         msg.dest = AM_BROADCAST_ADDR; //destination address 
-        msg.protocol = PROTOCOL_PING; // use proper protocol instead of empty string (empty string was giving me bugs)
+        msg.protocol = PROTOCOL_NAME; // (empty string was giving me bugs) alsooo needed to use this one to differentiate from flooding protocol
         msg.seq = 0; //sequence number (this way we know what # packet we are sending/recivieng) -> useful for detencing duplicates
         strcpy(msg.payload, "From ND"); //setting the payload 
 
@@ -81,7 +81,7 @@ implementation {
         p = (pack*) payload;
 
         //we know we discovered a neighbor if the payload is the neighbor discovery message 
-        if (strcmp(p->payload, "From ND") == 0) {
+        if (p->protocol == PROTOCOL_NAME && strcmp(p->payload, "From ND") == 0) {
             // dbg(NEIGHBOR_CHANNEL, "Received a beacon");
 
             // After receiving packet Check if already in neighbor table (if it has same src address)

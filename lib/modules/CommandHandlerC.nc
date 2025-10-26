@@ -33,7 +33,7 @@ implementation{
    CommandHandlerP.Packet -> ActiveMessageC;
    
     components FloodingC;
-    CommandHandlerP.Flooding -> FloodingC.SimpleSend;
+   CommandHandlerP.Flooding -> FloodingC.FloodSender;
 
 
 }

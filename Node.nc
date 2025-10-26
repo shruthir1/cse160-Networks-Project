@@ -71,9 +71,13 @@ implementation {
     }
 
     event void CommandHandler.ping(uint16_t destination, uint8_t *payload) {
-        dbg(GENERAL_CHANNEL, "PING EVENT \n");
-        makePack(&sendPackage, TOS_NODE_ID, destination, 0, 0, 0,
+        // dbg(GENERAL_CHANNEL, "PING EVENT \n");
+        dbg(GENERAL_CHANNEL, "PING EVENT: Node %d pinging %d with message: %s\n", 
+        TOS_NODE_ID, destination, payload);
+        makePack(&sendPackage, TOS_NODE_ID, destination, 15, PROTOCOL_PING, 0,
                  payload, PACKET_MAX_PAYLOAD_SIZE);
+        dbg(GENERAL_CHANNEL, "Calling Sender.send with dest=%d, protocol=%d\n", 
+        destination, sendPackage.protocol);
         call Sender.send(sendPackage, destination);
     }
 
