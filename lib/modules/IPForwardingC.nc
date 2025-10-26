@@ -19,6 +19,6 @@ implementation{
 
         //might need to fix these two lines (naming)
     IPReceive = IPForwardingP.IPReceive;
-    SimpleSend = IPForwardingP.ForwardSender; 
+    SimpleSend = IPForwardingP.IPSender; 
 }
 
