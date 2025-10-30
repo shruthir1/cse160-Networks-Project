@@ -18,6 +18,8 @@ module Node {
 
     uses interface SimpleSend as Sender;
     uses interface CommandHandler;
+    uses interface LinkRouting;
+  
 
     uses interface NeighborDiscovery;
 }
@@ -38,7 +40,8 @@ implementation {
         // Start neighbor discovery
         call NeighborDiscovery.start();
         // call Flooding.simpleSend();
-        
+           call LinkRouting.start();
+      
         // ADD ANOTHER DEBUG MESSAGE
         // dbg(GENERAL_CHANNEL, "Node %d: Neighbor discovery start() called\n", TOS_NODE_ID);
 
@@ -100,7 +103,6 @@ implementation {
         Package->src = src;
         Package->dest = dest;
         Package->TTL = TTL;
-        Package->seq = seq;
         Package->protocol = protocol;
         memcpy(Package->payload, payload, length);
     }

@@ -2,7 +2,7 @@
 #include "../../includes/packet.h" 
 
 #define BEACON_PERIOD 1000 //every one second we send a message 
-#define MAX_NEIGHBORS 20 // because there are twenty nodes so far 
+#define MAX_NEIGHBORS 255 // because there are twenty nodes so far 
 #define TIMEOUT 5   // neighbor TTL ends after 5 beacon intervals
 
 module NeighborDiscoveryP {
@@ -106,5 +106,13 @@ implementation {
         }
 
         return msg; //when you run recieve.recieve you use its buffer, at the end you have to return it 
+    }
+
+    command uint16_t* NeighborDiscovery.getNeighborList(){
+        return neighbors;
+    }
+
+    command uint8_t NeighborDiscovery.getNeighborCount(){
+        return count; 
     }
 }

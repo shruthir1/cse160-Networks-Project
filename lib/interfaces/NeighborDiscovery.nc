@@ -3,4 +3,6 @@
 interface NeighborDiscovery{
 	command void start();
 	command void print();
+	command uint16_t* getNeighborList();
+	command uint8_t getNeighborCount();
 }

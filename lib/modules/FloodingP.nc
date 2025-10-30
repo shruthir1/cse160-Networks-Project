@@ -1,6 +1,7 @@
 //we will be sending packets over channels so we need these header files
 #include "../../includes/channels.h"
 #include "../../includes/packet.h"
+#include "../../includes/protocol.h"
 #define FLOODING_CHANNEL "flooding"
 #define MAX_HISTORY 50   // store recent (src,seq) pairs to prevent loops, but we dont want to store it too many times
 
@@ -10,6 +11,7 @@ module FloodingP {
     provides interface Receive as MainReceive;   //for recieivng ping packets  
     provides interface Receive as ReplyReceive; //for recieving ping REPLY packets 
     // provides interface Flooding; 
+    // provides interface Receive as FloodReceive;
 
     //internal interfaces (from wiring in C file and for this particular implementation)
     uses interface SimpleSend as InternalSender;
@@ -93,9 +95,14 @@ implementation {
         p = (pack*) payload;
         
         //avoid neighbor discovery pings
-        if(p->protocol != PROTOCOL_PING && p->protocol != PROTOCOL_PINGREPLY){
+        if(p->protocol != PROTOCOL_PING && p->protocol != PROTOCOL_PINGREPLY && p->protocol != PROTOCOL_LINKSTATE){
              return msg;
         }
+
+        // if(p->protocol == PROTOCOL_LINKSTATE){
+        //     signal FloodReceive.receive(msg, payload, len);
+        //     return msg;
+        // }
         
         // Drop packet if already seen (avoiding duplicates)
         if (seenBefore(p->src, p->seq)) {
@@ -156,3 +163,4 @@ if (p->dest == TOS_NODE_ID) {
         return msg; // if no one is listening then return message to buffer here too 
     }
 }
+

@@ -2,21 +2,19 @@
 
 configuration LinkRoutingC{
     provides interface LinkRouting;
-}
+    // uses interface Receive as FloodReceive;
+}  
 
 implementation {
     components LinkRoutingP;
     components new TimerMilliC() as PeriodicTimer; 
-    components new SimpleSend(AM_ROUTING);
-    components new AMReceiver(AM_ROUTING);
-    
+    components FloodingC;
     components NeighborDiscoveryC;
+ 
     LinkRoutingP.NeighborDiscovery -> NeighborDiscoveryC;
-
+    LinkRoutingP.FloodSender -> FloodingC.FloodSender;
+    LinkRoutingP.FloodReceive -> FloodingC.FloodReceive;
     LinkRouting = LinkRoutingP.LinkRouting;
-
-    LinkRoutingP.Sender -> SimpleSendC;
-    LinkRoutingP.Receive -> AMReceiverC;
     LinkRoutingP.PeriodicTimer -> PeriodicTimer; 
 
 }
