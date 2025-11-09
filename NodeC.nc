@@ -28,14 +28,13 @@ implementation {
     IPForwardingC.Sender -> FloodingC.FloodSender;
     // Node.Sender -> FloodingC.FloodSender;
 
-    LinkRoutingC.FloodReceive -> FloodingC.MainReceive;
-    LinkRoutingC.FloodSender -> FloodingC.FloodSender;
+    // LinkRoutingC.FloodReceive -> FloodingC.MainReceive;
+    // LinkRoutingC.FloodSender -> FloodingC.FloodSender;
 
     LinkRoutingC.NeighborDiscovery -> NeighborDiscoveryC.NeighborDiscovery;
 
-    // Node.LinkRouting -> LinkRoutingC.LinkRouting;
+    Node.LinkRouting -> LinkRoutingC.LinkRouting;
     // LinkRoutingC.FloodReceive -> FloodingC.MainReceive; 
-
 
 }
 

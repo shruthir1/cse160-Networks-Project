@@ -1,7 +1,7 @@
 #define AM_FORWARDING 81 
 
 configuration IPForwardingC{
-    provides interface SimpleSend; //for pings
+    provides interface SimpleSend as IPSender; //for pings
     provides interface Receive as IPReceive;
 }
 
@@ -12,12 +12,12 @@ implementation{
 
     components LinkRoutingC; 
 
-    IPForwardingP.LinkStateRouting -> LinkRoutingC.LinkStateRouting;
+    IPForwardingP.LinkRouting -> LinkRoutingC.LinkRouting;
 
-    IPForwardingp.Sender -> SimpleSendC;
+    IPForwardingP.Sender -> SimpleSendC;
     IPForwardingP.InternalReceiver -> AMReceiverC;
 
-        //might need to fix these two lines (naming)
+    //might need to fix these two lines (naming)
     IPReceive = IPForwardingP.IPReceive;
     SimpleSend = IPForwardingP.IPSender; 
 }

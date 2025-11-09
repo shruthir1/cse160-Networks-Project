@@ -33,10 +33,15 @@ else
 implementation{
 
     command error_t IPSender.send(pack msg, uint16_t dest){
+        if(dest == AM_BROADCAST_ADDR){
+            dbg(ROUTING_CHANNEL, "Sending broadcast packet\n");
+            return call Sender.send(msg, dest);
+        }
+
         uint16_t nextHop = call LinkRouting.getNextHop(dest);
         // nextHop = call LinkRouting.getNextHop(dest);
 
-        if(nextHop < 1 || nextHop >= 999){ //(i hope) using 999 to indicate invalid node
+        if(nextHop < 1 || nextHop >= 0xFFFF){ //(i hope) using 999 to indicate invalid node
                 dbg(ROUTING_CHANNEL, "Route wasn't found, next hop was invalid\n");
                 return FAIL;
         }
@@ -55,6 +60,7 @@ implementation{
 
         //if its ND or FLooding we return, not dealt with here 
         if (myMsg->protocol != PROTOCOL_PING && myMsg->protocol != PROTOCOL_PINGREPLY) {
+            signal IPReceive.receive(msg, payload, len);
             return msg;
         }
 
@@ -65,6 +71,7 @@ implementation{
                 curr = myMsg->src;
 				myMsg->src = myMsg->dest;
 				myMsg->dest = curr;
+                myMsg->protocol = PROTOCOL_PINGREPLY;
 				myMsg->TTL = 15;
                 call IPSender.send(*myMsg, myMsg->dest);
             }else{
@@ -83,7 +90,7 @@ implementation{
 
         nextHop = call LinkRouting.getNextHop(myMsg->dest);
 
-        if(nextHop < 1 || nextHop >= 999) {
+        if(nextHop < 1 || nextHop >= 0xFFFF) {
             //invalid hop, dropping packet 
             return msg;
         }
@@ -93,4 +100,8 @@ implementation{
         call IPSender.send(*myMsg, nextHop);
         return msg;
     }
+
+    default event message_t* IPReceive.receive(message_t* msg, void* payload, uint8_t len) {
+    return msg;
+}
 }

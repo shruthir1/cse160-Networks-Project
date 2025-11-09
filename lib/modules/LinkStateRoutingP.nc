@@ -54,7 +54,7 @@ implementation{
         lsa.count = nCount; 
         // lsa.protocol = PROTOCOL_LINKSTATE;
 
-        if (nCount > MAX_NEIGHBORS) nCount = MAX_NEIGHBORS;
+        // if (nCount > MAX_NEIGHBORS) nCount = MAX_NEIGHBORS;
 
         for (i = 0; i < nCount; i++) {
             lsa.neighbors[i] = (uint8_t)neighborList[i];
@@ -115,8 +115,8 @@ implementation{
         uint8_t parent[LIST_SIZE];
         uint8_t i = 0; 
         uint8_t c = 0;
-        uint8_t min = -1;
-        uint8_t minCost = 0;
+        uint8_t min = 0xFF;
+        uint8_t minCost = 0xFFFF;
 
         for(i = 0; i < LIST_SIZE; i++){
             cost[i] = 0xFFFF;
@@ -131,7 +131,7 @@ implementation{
             min = -1; 
             minCost = 0xFFFF;
             for (i = 0; i < LIST_SIZE; i++){
-                if(!visted[i] && cost[i] <= minDist){
+                if(!visited[i] && cost[i] <= minCost){
                     minCost = cost[i];
                     min = i; 
                 }
@@ -142,7 +142,7 @@ implementation{
 
             for(i = 0; i < LIST_SIZE; i++){
                 if(topology[min][i] && !visited[i] && cost[min] +1 < cost[i]){
-                    cost[i] = cost[min];
+                    cost[i] = cost[min] + 1;
                     parent[i] = min;
                 }
             }
@@ -154,7 +154,7 @@ implementation{
             int hop = i; 
             if(i == TOS_NODE_ID || cost[i] == 0xFFFF) continue;
 
-            while (prev[hop] != -1 && parent[hop] != TOS_NODE_ID){
+            while (parent[hop] != -1 && parent[hop] != TOS_NODE_ID){
                 hop = parent[hop];
             }
 
@@ -168,7 +168,7 @@ implementation{
 
     command uint16_t LinkRouting.getNextHop(uint16_t dest){
         if(dest >= LIST_SIZE) return 0xFFFF;
-        retrn nextHop[dest];
+        return nextHop[dest];
     }
 
     command void LinkRouting.print(){

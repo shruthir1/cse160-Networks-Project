@@ -6,15 +6,20 @@ configuration LinkRoutingC{
 }  
 
 implementation {
+
+
     components LinkRoutingP;
-    components new TimerMilliC() as PeriodicTimer; 
+    components new TimerMilliC() as LSATimer; 
     components FloodingC;
     components NeighborDiscoveryC;
- 
-    LinkRoutingP.NeighborDiscovery -> NeighborDiscoveryC;
-    LinkRoutingP.FloodSender -> FloodingC.FloodSender;
-    LinkRoutingP.FloodReceive -> FloodingC.FloodReceive;
+    // components new AMReceiverC(AM_PACK) as LSARx;
+    
     LinkRouting = LinkRoutingP.LinkRouting;
-    LinkRoutingP.PeriodicTimer -> PeriodicTimer; 
+    LinkRoutingP.NeighborDiscovery -> NeighborDiscoveryC.NeighborDiscovery;
+    LinkRoutingP.FloodSender -> FloodingC.FloodSender;
+    // LinkRoutingP.FloodReceive -> LSARx;
+    LinkRoutingP.Sender -> FloodingC.SimpleSend;
+    LinkRoutingP.LSATimer -> LSATimer; 
+
 
 }
