@@ -13,6 +13,7 @@
 
 configuration NodeC{
 }
+
 implementation {
     components MainC;
     components Node;
@@ -45,4 +46,9 @@ implementation {
 
     components floodingC;
     Node.flood -> floodingC;
+
+    components TransportC;     
+    CommandHandlerC.Transport -> TransportC;
+    TransportC.WaySend -> WayfinderC.WaySend;
+    WayfinderC.WayReceive -> TransportC;
 }
