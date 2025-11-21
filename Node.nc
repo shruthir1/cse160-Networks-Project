@@ -27,8 +27,6 @@ module Node{
    uses interface Wayfinder;
    uses interface Waysender as router;
    uses interface PacketHandler;
-
-
    uses interface CommandHandler;
 }
 

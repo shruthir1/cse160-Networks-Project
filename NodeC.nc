@@ -47,8 +47,8 @@ implementation {
     components floodingC;
     Node.flood -> floodingC;
 
-    components TransportC;     
-    CommandHandlerC.Transport -> TransportC;
-    TransportC.WaySend -> WayfinderC.WaySend;
-    WayfinderC.WayReceive -> TransportC;
+    // components TransportC;     
+    // CommandHandlerC.Transport -> TransportC;
+    // TransportC.WaySend -> WayfinderC.WaySend;
+    // WayfinderC.WayReceive -> TransportC;
 }
