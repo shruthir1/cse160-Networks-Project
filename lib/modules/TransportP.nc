@@ -7,9 +7,10 @@
 
 module TransportP {
     provides interface Transport;
-    uses interface Timer<TMilli> as beaconTimer;
+    uses interface Timer<TMilli> as TCPtimer;
     uses interface SimpleSend as Sender;
     // uses interface Receive;
+    // uses interface PacketHandler;
     uses interface Queue<pack> as packetQueue; //tinyOS has its own Queue interface :D 
     uses interface List<socket_store_t> as SocketList; //socket_t is an index to the array of sockets we  have 
 }
@@ -136,7 +137,7 @@ if(socket.state == ESTABLISHED && receivePacket.data == 1)
 
     void makePack(pack *packet, uint16_t src, uint16_t dest, uint16_t protocol, uint16_t seq, uint8_t* payload, uint8_t length);
 
-    event void beaconTimer.fired(){
+    event void TCPtimer.fired(){
         pack myMsg = call packetQueue.head(); //returns first packet in the queue 
        
     }

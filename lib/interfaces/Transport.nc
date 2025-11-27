@@ -107,7 +107,7 @@ interface Transport{
     *    socket_addr_t *addr: the destination address and port where
     *       you will atempt a connection.
     * @side Client
-    * @return socket_t - returns SUCCESS if you are able to attempt
+    * @return socket_t - returns SUCCESrec if you are able to attempt
     *    a connection with the fd passed, else return FAIL.
     */
    command error_t connect(socket_t fd, socket_addr_t * addr);
