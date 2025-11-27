@@ -8,24 +8,33 @@ enum{
     SOCKET_BUFFER_SIZE = 128,
 };
 
+//enums are values that are set in stone 
 enum socket_state{
     CLOSED,
     LISTEN,
     ESTABLISHED,
     SYN_SENT,
     SYN_RCVD,
-    
+    CLOSE_WAIT,
+    LAST_ACK,
+    FIN_WAIT_1,
+    FIN_WAIT_2,
+    TIME_WAIT,
+
 };
 
 
-typedef nx_uint8_t nx_socket_port_t;
-typedef uint8_t socket_port_t;
+typedef nx_uint8_t nx_socket_port_t; //can declare vars of type nx_socket_port_t
+typedef uint8_t socket_port_t; //socket_port_t is a var type that is really a uint8_t but more descriptive
 
 // socket_addr_t is a simplified version of an IP connection.
 typedef nx_struct socket_addr_t{
     nx_socket_port_t port;
     nx_uint16_t addr;
-}socket_addr_t;
+}socket_addr_t; //this is the type being defined by the typedef,  
+//if you declare a var of type socket_addr_t then it will have fields within it (the two above fields)
+// socket_addr_t sockAddr; //composed of multiple sub-members can access port and addr
+// sockAddr.port = 0; //how to access those sub-members
 
 
 // File descripter id. Each id is associated with a socket_store_t
@@ -52,6 +61,6 @@ typedef struct socket_store_t{
 
     uint16_t RTT;
     uint8_t effectiveWindow;
-}socket_store_t;
+}socket_store_t; // this is the type for this typedef
 
 #endif

@@ -2,14 +2,14 @@
 
 configuration TransportC {
     provides interface Transport;         
-    uses interface SimpleSend as Sender; 
-    uses interface Receive; 
+    // uses interface SimpleSend as Sender; 
+    // uses interface Receive; 
 }
 
 implementation {
-    components TransportP;
+    components TransportP as transport;
 
-    Transport = TransportP;
+    Transport = transport;
   
 }
 
