@@ -134,6 +134,42 @@ class TestSim:
 
     def routeDMP(self, destination):
         self.sendCMD(self.CMD_ROUTE_DUMP, destination, "routing command")
+    
+    def testServer(self, address, port):
+        # sock = socket()
+        # addr = socket_addr() #constructor
+        # addr.port = port
+        # addr.addr = address
+        # bind(sock, addr)
+        # startTimer ???
+        # listen(sock)
+        # newSock = accept(sock)
+        # buffSize = 100
+        # buff = [None] * buffSize
+        # read(newSock, buff, buffSize)
+        # print(buff)
+        # close(newSock)
+        return
+
+    def testClient(self, destination, srcPort, destPort, transferCount):
+        # sock = socket()
+        # addr = socket_addr()
+        # addr.port = srcPort
+        # addr.addr = NODE_ID
+        # bind(sock, addr)
+        # serverAddr = socket_addr()
+        # serverAddr.port = destPort
+        # serverAddr.addr = destination
+        # connect(fd, serverAddr)
+        # startTimer ???
+        # buff = [None] * transferCount
+        # for i in range(transferCount):
+            # buff[i] = i
+        # write(sock, buff, transferCount)
+        #print(buff)
+        #close(sock)
+        return
+
 
     def addChannel(self, channelName, out=sys.stdout):
         print 'Adding Channel', channelName

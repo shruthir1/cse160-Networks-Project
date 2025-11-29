@@ -173,8 +173,14 @@ if(socket.state == ESTABLISHED && receivePacket.data == 1)
 
     }
 
-    command error_t Transport.bind(socket_t fd, socket_addr_t *addr){
-        //success if able to bind sockets 
+    command error_t Transport.bind(socket_t fd, socket_addr_t *addr){ 
+        //bind a socket with an address 
+        //get() is giving a copy of whats in the list by using a pointer we're able to interact what whats directly in the list (and change it)
+        socket_store_t mySocket = call SocketList.get(fd);
+        //only use arrows on pointer vars 
+        mySocket.src = addr->port;
+        //mySocket.state does not change on bind()
+        
     }
 
     command socket_t Transport.accept(socket_t fd){
@@ -183,6 +189,9 @@ if(socket.state == ESTABLISHED && receivePacket.data == 1)
          a destination associated with the destination address and port.
         if not return a null socket.
         */
+
+        //basically needs to return a newly connected socket 
+
 
     }
     
@@ -384,14 +393,35 @@ if(socket.state == ESTABLISHED && receivePacket.data == 1)
 
     command error_t Transport.listen(socket_t fd){
         //* @return error_t - returns SUCCESS if you are able change the state to listen else FAIL.
+        socket_store_t mySocket = call SocketList.get(fd);
+        mySocket.state = LISTEN;
+        if(mySocket.state == LISTEN){
+            return 0;
+        }else{
+            return 1;
+        }
     }
 
     command error_t Transport.close(socket_t fd){
         //where the connection closes 
+        socket_store_t mySocket = call SocketList.get(fd);
+        mySocket.state = CLOSED;
+        if(mySocket.state == CLOSED){
+            return 0; 
+        }else{
+            return 1;
+        }
     }
 
     command error_t Transport.release(socket_t fd){
         //@return socket_t - returns SUCCESS if you are able to attempt a closure with the fd passed, else return FAIL.
+        //not sure what the different between this and close is?? I think this one is asking if the state is closed then return true 
+        socket_store_t mySocket = call SocketList.get(fd);
+        if(mySocket.state == CLOSED){
+            return 0;
+        }else{ 
+            return 1;
+        }
     }
 
     command uint16_t Transport.read(socket_t fd, uint8_t *buff, uint16_t bufflen){

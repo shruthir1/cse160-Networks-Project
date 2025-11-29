@@ -21,6 +21,14 @@ def main():
     s.addChannel(s.GENERAL_CHANNEL);
     s.addChannel(s.TRANSPORT_CHANNEL);
 
+    s.runTime(300);
+    s.testServer(5, 1234);
+    s.runTime(60);
+
+    s.testClient(5, 4321, 1234, 100);
+    s.runTime(1);
+    s.runTime(1000);
+
 #here is where the accpet and connect pseudocode implementation might go 
 
 if __name__ == '__main__':

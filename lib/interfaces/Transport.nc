@@ -40,6 +40,8 @@ interface Transport{
     */
    command error_t bind(socket_t fd, socket_addr_t *addr);
 
+
+   //client will use a connect() and server will use accept(), accpet is checking if have connection requests
    /**
     * Checks to see if there are socket connections to connect to and
     * if there is one, connect to it.
