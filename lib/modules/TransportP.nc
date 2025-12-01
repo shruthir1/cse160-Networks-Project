@@ -206,7 +206,14 @@ implementation {
             call Sender.makePack(&myNewMsg, TOS_NODE_ID, Qsocket->dest.addr, PROTOCOL_TCP, 0,  PACKET_MAX_PAYLOAD_SIZE);
             call Sender.send(myNewMsg, Qsocket->dest.addr);
 
-            dbg(TRANSPORT_CHANNEL, "sent SYN-ACK to client\n");
+            dbg(TRANSPORT_CHANNEL, "sent SYN-ACK to client, client connection establsihed\n");
+        }
+
+        if (flags == ACK_FLAG){
+            dbg(TRANSPORT_CHANNEL, "ACK recieved, server connected!");
+            if(Qsocket->state == SYN_RCVD){
+                Qsocket->state = ESTABLISHED; //now connection is established between two nodes, so machine state should be connected 
+            }
         }
 
         
@@ -336,11 +343,11 @@ implementation {
         //not sure what the different between this and close is?? I think this one is asking if the state is closed then return true 
        
         socket_store_t *Qsocket = call socketQueue.element(fd -1);
-        
+        if(Qsocket == NULL) return FAIL;
         if(Qsocket->state == CLOSED){
-            return 0;
+            return SUCCESS;
         }else{ 
-            return 1;
+            return FAIL;
         }
     }
 
