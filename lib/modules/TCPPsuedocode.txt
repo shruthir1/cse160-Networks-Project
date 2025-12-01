@@ -99,23 +99,45 @@ FLOW CONTROL PSUEDOCODE
     we send a window of packets, when we recieve ack's we slide the window by increasing seqNum 
     if i dont receive ack after some time resend all packets 
 
+
+Transport.Write():
 if(socket.state == ESTABLISHED && receivePacket.data_flag == 1)
     //if the data flag is marked then we apply flow control
-    packetCount = 0
     if((lastByteSent - lastByteAcked) < advertisedWindow )
-        //build packet to send need to understand how to 
+        //build packet to send need to understand how to increment seq and ack
+        dataPacket.flag == data_flag
+        dataPacket.seq = 
+        dataPacket.ack = 
+        dataPacket.src = recievedPacket.dest
+        dataPacket.dest = recievedPacket.src
+        send(dataPacket)
 
+        mySocket.lastByteSent++
+        //timeout queue
+        timeout = getnow() + 2*RTT
+        timeoutQueue.pushback(timeout)
 
+        //when to start timer? 
+
+    
+  on TCPtimer.fired:
+    //we want to compare the time that received the last packet with timeoutQueue.pop()
+    //if these two values are not equal then we want to retransmit all un-acked packets
+
+        
+  
+  Transport.Read(): 
+  //we need to ack here and slide the window 
 
   
-  //SENDER BUFFER 
-  isWrapped = FALSE
-  if(lastSent < lastAck)
-    isWrapped = TRUE
-  //RECIEVER BUFFER 
-  if(lastRead < lastRecieved)
-    isWrapped = TRUE
- //WRITE/SEND BUFFER (only on client)
-  if(lastWritten < lastAck)
-    isWrapped = TRUE
-    
+    //SENDER BUFFER 
+    isWrapped = FALSE
+    if(lastSent < lastAck)
+        isWrapped = TRUE
+    //RECIEVER BUFFER 
+    if(lastRead < lastRecieved)
+        isWrapped = TRUE
+    //WRITE/SEND BUFFER (only on client)
+    if(lastWritten < lastAck)
+        isWrapped = TRUE
+        
