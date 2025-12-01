@@ -16,118 +16,6 @@ module TransportP {
 }
 
 implementation {
-  /* SETUP
-
-if iniating connection:
-   TCPPaacket connectionPacket
-   connectionPacket.SYN flag = 1
-   connectionPacket.ISN = m 
-   window = bufferSize
-   mySocket.STATE = SYN_SENT
-   send connectionPacket
-
-if receiving pack with recievePacket.SYN == 1 && recievePacket.ACK == 0: 
-    (sending syn-ack:)
-     TCPPacket responsePacket
-     responsePacket.SYN flag = 1
-     responsePacket.ACK flag = 1
-     responsePacket.acknum = recievePacket.ISN + 1 
-     responsePacket.ISN = n 
-     window = bufferSize 
-     mySocket.STATE = SYN_RECIEVED
-     send responsePacket
-
-if receiving recievePacket.SYN == 1 && recievePacket.ACK == 1: 
-    (sending ACK:)
-     TCPPacket responsePacket
-     responePacket.SYN flag = 0
-     responsePacket.ACK flag = 1
-     responsePacket.acknum = n + 1
-     window = bufferSize
-     mySocket.STATE = ESTABLISHED
-     send responsePacket
-
-if receiving recievePacket.ACK == 1 && otherSocket.STATE = ESTABLISHED:
-    STATE = ESTABLISHED
-    
-
-  */
-
-
-   /* TEARDOWN
-
-   enum with state values in the socket header, we wanna set and check for state values too
-
-if mySocket.STATE == ESTABLISHED && starting teardown: 
-    (sending the FIN:)
-    TCPPacket finpacket
-     finpacket.FIN flag = 1
-     finpacket.ACK flag = 0
-     window = bufferSize
-     finpacket.ISN = x (this nums seq num comes from state -> state is global and we can ge tthis from struct)
-     finpacket.STATE = FIN_WAIT_1
-     send finpacket
-
-//will have to send from both client and server again 
-if receiving recievePacket.FIN == 1 && recievePacket.ACK == 0:
-    (sending ACK:)
-    TCPPacket responsePacket
-    responsePacket.ACK flag= 1
-    responsePacket.FIN flag = 0
-    responsePacket.acknum = x + 1 (m comes from state)
-    responsePacket.ISN = y (this connection's sequence num)
-    window = bufferSize
-    send responsePacket
-    mySocket.STATE = CLOSE_WAIT
-
-    (sending FIN:)
-    TCPPacket responsePacket2
-    responsePacket2.ACK flag = 0
-    responsePacket2.FIN flag = 1
-    responsePacket2.acknum = x + 1 (same as last packet)
-    responsePacket2.ISN = y (same as other packet being sent)
-    window = bufferSize
-    send repsonsePacket2
-    mySocket.STATE = LAST_ACK
-
-
-if receivePacket.FIN == 0 && recievePacket.ACK == 1 && otherSocket.STATE == CLOSE_WAIT
-    (recieivng ACK after sending FIN)
-    mySocket.STATE = FIN_WAIT_2
-    //not sure if this above conditional is needed???
-
-if receiving recievePacket.FIN == 1 && recievePacket.ACK == 0 && otherSocket.STATE == LAST_ACK
-    (recieving FIN after receiving ACK, Sending final ACK)
-    TCPPacket finalize
-    finalize.FIN flag = 0
-    finalize.ACK flag = 1
-    finalize.ISN = x + 1 (this connections seq )
-    finalize.acknum = y + 1 (this connections ack num)
-    window = bufferSize
-    send finalize
-    mySocket.STATE = CLOSED
-    close connection
-
-if recieving recievePacket.ACK == 1 && otherSocket.STATE = CLOSED
-    mySocket.STATE = CLOSED
-
-  */
-
-  /* FLOW CONTROL PSUEDOCODE
-    we send a window of packets, when we recieve ack's we slide the window by increasing seqNum 
-    if i dont receive ack after some time resend all packets 
-
-if(socket.state == ESTABLISHED && receivePacket.data == 1)
-    //if the data flag is marked then we apply flow control
-    if((lastByteSent - lastByteAcked) < advertisedWindow )
-        send data
-
-
-  */
-
-  /* CONGESTION CONTROL PSUEDOCODE
-  
-  */
     
     //defining these functions at the top of the file to be used before function is defined (in case function is used before) 
     socket_t getSocket(uint8_t destPort, uint8_t srcPort);
@@ -135,7 +23,7 @@ if(socket.state == ESTABLISHED && receivePacket.data == 1)
 
     void finalizedConnection(socket_t fd);
 
-    void makePack(pack *packet, uint16_t src, uint16_t dest, uint16_t protocol, uint16_t seq, uint8_t* payload, uint8_t length);
+    // void makePack(pack *packet, uint16_t src, uint16_t dest, uint16_t protocol, uint16_t seq, uint8_t* payload, uint8_t length);
 
     event void TCPtimer.fired(){
         pack myMsg = call packetQueue.head(); //returns first packet in the queue 
@@ -200,16 +88,17 @@ if(socket.state == ESTABLISHED && receivePacket.data == 1)
     }
 
 
-    void makePack(pack *packet, uint16_t src, uint16_t dest, uint16_t protocol, uint16_t seq, uint8_t* payload, uint8_t length){
-      //building our packet
-        tcp_pack* myTCPPack;
-        packet->src = src;
-        packet->dest = dest;
-        myTCPPack = (tcp_pack*)(packet->payload);
-        myTCPPack->seq = seq;
-        packet->protocol = protocol;
-        memcpy(packet->payload, payload, length); //puts payload into packet
-    }
+
+    // void makePack(pack *packet, uint16_t src, uint16_t dest, uint16_t protocol, uint16_t seq, uint8_t* payload, uint8_t length){
+    //   //building our packet
+    //     tcp_pack* myTCPPack;
+    //     packet->src = src;
+    //     packet->dest = dest;
+    //     myTCPPack = (tcp_pack*)(packet->payload);
+    //     myTCPPack->seq = seq;
+    //     packet->protocol = protocol;
+    //     memcpy(packet->payload, payload, length); //puts payload into packet
+    // }
 
     command error_t Transport.connect(socket_t fd, socket_addr_t * addr){
         // @return socket_t - returns SUCCESS if you are able to attempt a closure with the fd passed, else return FAIL.
@@ -229,7 +118,7 @@ if(socket.state == ESTABLISHED && receivePacket.data == 1)
         myTCPPack->flags = SYN_FLAG;
         myTCPPack->seq = 1;
         //making initial SYN pack
-        makePack(&myMsg, TOS_NODE_ID, mySocket.dest.addr, PROTOCOL_TCP, 0, NULL, 0); //because a SYN packet has no TCP payload
+        call Sender.makePack(&myMsg, TOS_NODE_ID, mySocket.dest.addr, PROTOCOL_TCP, NULL, 0); //because a SYN packet has no TCP payload
         mySocket.state = SYN_SENT;
         dbg(ROUTING_CHANNEL, "Node %u State is %u \n", mySocket.src, mySocket.state);
         call Sender.send(myMsg, mySocket.dest.addr);
@@ -276,7 +165,7 @@ if(socket.state == ESTABLISHED && receivePacket.data == 1)
                 myTCPPack->seq = 1;
                 myTCPPack->ACK = seq++;
                 myTCPPack->flags = SYN_ACK_FLAG;
-                makePack(&myNewMsg, TOS_NODE_ID, mySocket.dest.addr, PROTOCOL_TCP, 0, myTCPPack, PACKET_MAX_PAYLOAD_SIZE);
+                call Sender.makePack(&myNewMsg, TOS_NODE_ID, mySocket.dest.addr, PROTOCOL_TCP, myTCPPack, PACKET_MAX_PAYLOAD_SIZE);
                 call Sender.send(myNewMsg, mySocket.dest.addr);
                 dbg(TRANSPORT_CHANNEL, "just sent SYN-ACK packet");
 
@@ -296,7 +185,7 @@ if(socket.state == ESTABLISHED && receivePacket.data == 1)
             myTCPPack->ACK = seq++;
             myTCPPack->flags = ACK_FLAG;
 
-            makePack(&myNewMsg, TOS_NODE_ID, mySocket.dest.addr, PROTOCOL_TCP, 0, myTCPPack, PACKET_MAX_PAYLOAD_SIZE);
+            call Sender.makePack(&myNewMsg, TOS_NODE_ID, mySocket.dest.addr, PROTOCOL_TCP, myTCPPack, PACKET_MAX_PAYLOAD_SIZE);
             call Sender.send(myNewMsg, mySocket.dest.addr);
 
             dbg(TRANSPORT_CHANNEL, "sent SYN-ACK");
@@ -333,47 +222,20 @@ if(socket.state == ESTABLISHED && receivePacket.data == 1)
                 myTCPPack->flags = FIN_ACK;
 
                 dbg(TRANSPORT_CHANNEL, "Sending FIN-ACK from reciever");
-                makePack(&myNewMsg, TOS_NODE_ID, mySocket.dest.addr, PROTOCOL_TCP, 0, myTCPPack, PACKET_MAX_PAYLOAD_SIZE);
+                call Sender.makePack(&myNewMsg, TOS_NODE_ID, mySocket.dest.addr, PROTOCOL_TCP, myTCPPack, PACKET_MAX_PAYLOAD_SIZE);
                 call Sender.send(myNewMsg, mySocket.dest.addr);
                 
                 //send another fin packet here as well i think nothing but the flags need to be changed 
                 myTCPPack->flags = FIN_FLAG;
                 dbg(TRANSPORT_CHANNEL, "sending last FIN from receiver");
-                makePack(&myNewMsg, TOS_NODE_ID, mySocket.dest.addr, PROTOCOL_TCP, 0, myTCPPack, PACKET_MAX_PAYLOAD_SIZE);
+                call Sender.makePack(&myNewMsg, TOS_NODE_ID, mySocket.dest.addr, PROTOCOL_TCP, myTCPPack, PACKET_MAX_PAYLOAD_SIZE);
                 call Sender.send(myNewMsg, mySocket.dest.addr);
                 mySocket.state = LAST_ACK;
 
-            }else if (mySocket.state == FIN_WAIT_2){
-                mySocket.state = TIME_WAIT;
-                //supposed to wait some time in case retranmissions need to happen and then state == closed
-                //also need to send lastAck from client side 
-                mySocket = call SocketList.get(getSocket(destPort, srcPort));
-                mySocket.dest.port = srcPort;
-                mySocket.dest.addr = mySocket.src;
-                myTCPPack->destPort = mySocket.dest.port;
-                myTCPPack->srcPort = mySocket.src; //not sure if this should be initialized to be random
-                myTCPPack->seq = 1; //this needs to the ack of the prev packet
-                myTCPPack->ACK = seq++;
-                myTCPPack->flags = FIN_ACK;
-
-                dbg(TRANSPORT_CHANNEL, "sending last ACK from Client Side");
-                makePack(&myNewMsg, TOS_NODE_ID, mySocket.dest.addr, PROTOCOL_TCP, 0, myTCPPack, PACKET_MAX_PAYLOAD_SIZE);
-                call Sender.send(myNewMsg, mySocket.dest.addr);
-                mySocket.state = CLOSED; //not sure if theres supposed to be a timer that times out first 
             }
         }
 
-        if(flags == FIN_ACK){
-            if(mySocket.state == LAST_ACK){
-                dbg(TRANSPORT_CHANNEL, "Received FIN-ACK");
-                mySocket = call SocketList.get(getSocket(destPort, srcPort));
-                mySocket.state = CLOSED; //machine state is closed, theres no longer a connection 
-            }else if(mySocket.state == FIN_WAIT_1){
-                //recieved first ack from receiver side
-                mySocket.state = FIN_WAIT_2;
-
-            }
-        }
+        
 
 
     }
@@ -395,21 +257,88 @@ if(socket.state == ESTABLISHED && receivePacket.data == 1)
         //* @return error_t - returns SUCCESS if you are able change the state to listen else FAIL.
         socket_store_t mySocket = call SocketList.get(fd);
         mySocket.state = LISTEN;
-        if(mySocket.state == LISTEN){
-            return 0;
-        }else{
-            return 1;
-        }
+        //server now waits until SYN packet is sent 
     }
 
     command error_t Transport.close(socket_t fd){
-        //where the connection closes 
+        //where the connection closes, if state is etablished: start fin send
         socket_store_t mySocket = call SocketList.get(fd);
-        mySocket.state = CLOSED;
-        if(mySocket.state == CLOSED){
-            return 0; 
+        pack myMsg;
+        tcp_pack* myTCPPack;
+
+        if(mySocket.state == ESTABLISHED){
+            //send fin pack the receiver does not call close() when state is established
+            //SENDER 
+            myTCPPack = (tcp_pack*)(myMsg.payload); //we're using a TCPPack pointer to the payload of the IP packet, because this is where the TCP header lies
+            myTCPPack->destPort = mySocket.dest.port; //not sure if this is right 
+            myTCPPack->srcPort = mySocket.src;
+            myTCPPack->ACK = 0; //also not sure if this is right 
+            myTCPPack->flags = FIN_FLAG;
+            myTCPPack->seq = 1; //should this be random?
+            //sending
+            call Sender.makePack(&myMsg, TOS_NODE_ID, mySocket.dest.addr, PROTOCOL_TCP, NULL, 0); //NULL because a FIN packet has no TCP payload
+            mySocket.state = FIN_WAIT_1;
+            dbg(ROUTING_CHANNEL, "Starting close, send FIN \n");
+            call Sender.send(myMsg, mySocket.dest.addr);
+
+
+        }else if(mySocket.state == FIN_WAIT_1){
+            //SENDER
+            mySocket.state = FIN_WAIT_2;
+        }else if(mySocket.state == FIN_WAIT_2){
+            //SENDER
+            mySocket.state = TIME_WAIT;
+            //supposed to wait some time in case retranmissions need to happen and then state == closed
+            //also need to send lastAck from client side 
+            myTCPPack->destPort = mySocket.dest.port;
+            myTCPPack->srcPort = mySocket.src; //not sure if this should be initialized to be random
+            myTCPPack->seq = 1; //this needs to the ack of the prev packet
+            myTCPPack->ACK = (myTCPPack->seq)++;
+            myTCPPack->flags = FIN_ACK;
+
+            dbg(TRANSPORT_CHANNEL, "sending last ACK from Client Side");
+            call Sender.makePack(&myMsg, TOS_NODE_ID, mySocket.dest.addr, PROTOCOL_TCP, myTCPPack, PACKET_MAX_PAYLOAD_SIZE);
+            call Sender.send(myMsg, mySocket.dest.addr);
+            
+        }else if(mySocket.state == TIME_WAIT){
+            //SENDER
+            //needs to wait a bit first
+
+            mySocket.state == CLOSED;
+        }else if(mySocket.state == CLOSE_WAIT){
+            //RECIEVER
+            //sends a FIN and an ACK 
+            //sending the ACK
+            myTCPPack = (tcp_pack*)(myMsg.payload); //we're using a TCPPack pointer to the payload of the IP packet, because this is where the TCP header lies
+            myTCPPack->destPort = mySocket.dest.port;
+            myTCPPack->srcPort = mySocket.src;
+            myTCPPack->ACK = 0; //this should be based off the incoming FIN's seq (i think)
+            myTCPPack->flags = ACK_FLAG;
+            myTCPPack->seq = 1;
+            call Sender.makePack(&myMsg, TOS_NODE_ID, mySocket.dest.addr, PROTOCOL_TCP, NULL, 0); //because a SYN packet has no TCP payload
+            call Sender.send(myMsg, mySocket.dest.addr);
+
+            //sending the fin
+            myTCPPack = (tcp_pack*)(myMsg.payload); //we're using a TCPPack pointer to the payload of the IP packet, because this is where the TCP header lies
+            myTCPPack->destPort = mySocket.dest.port;
+            myTCPPack->srcPort = mySocket.src;
+            myTCPPack->ACK = 0; //same number as the ack packet being sent 
+            myTCPPack->flags = FIN_FLAG;
+            myTCPPack->seq = 2; //this needs to be a new num than the ack packet
+            call Sender.makePack(&myMsg, TOS_NODE_ID, mySocket.dest.addr, PROTOCOL_TCP, NULL, 0); //because a SYN packet has no TCP payload
+            call Sender.send(myMsg, mySocket.dest.addr);
+
+            dbg(ROUTING_CHANNEL, "Acknowledging close, sending ACK and FIN \n");
+            mySocket.state == LAST_ACK;
+
+        }else if(mySocket.state == LAST_ACK){
+            //RECIEVER
+            dbg(TRANSPORT_CHANNEL, "Received Last FIN-ACK, now closing socket");
+            mySocket = call SocketList.get(getSocket(myTCPPack->srcPort, myTCPPack->destPort));
+            mySocket.state = CLOSED;
+
         }else{
-            return 1;
+            mySocket.state = CLOSED;
         }
     }
 

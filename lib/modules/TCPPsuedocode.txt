@@ -1,0 +1,121 @@
+SETUP
+
+if iniating connection:
+   TCPPaacket connectionPacket
+   connectionPacket.SYN flag = 1
+   connectionPacket.ISN = m 
+   window = bufferSize
+   mySocket.STATE = SYN_SENT
+   send connectionPacket
+
+if receiving pack with recievePacket.SYN == 1 && recievePacket.ACK == 0: 
+    (sending syn-ack:)
+     TCPPacket responsePacket
+     responsePacket.SYN flag = 1
+     responsePacket.ACK flag = 1
+     responsePacket.acknum = recievePacket.ISN + 1 
+     responsePacket.ISN = n 
+     window = bufferSize 
+     mySocket.STATE = SYN_RECIEVED
+     send responsePacket
+
+if receiving recievePacket.SYN == 1 && recievePacket.ACK == 1: 
+    (sending ACK:)
+     TCPPacket responsePacket
+     responePacket.SYN flag = 0
+     responsePacket.ACK flag = 1
+     responsePacket.acknum = n + 1
+     window = bufferSize
+     mySocket.STATE = ESTABLISHED
+     send responsePacket
+
+if receiving recievePacket.ACK == 1 && otherSocket.STATE = ESTABLISHED:
+    STATE = ESTABLISHED
+    
+
+  
+
+
+TEARDOWN
+
+**enum with state values in the socket header, we wanna set and check for state values too
+
+if mySocket.STATE == ESTABLISHED && starting teardown: 
+    (sending the FIN:)
+    TCPPacket finpacket
+     finpacket.FIN flag = 1
+     finpacket.ACK flag = 0
+     window = bufferSize
+     finpacket.ISN = x (this nums seq num comes from state -> state is global and we can ge tthis from struct)
+     finpacket.STATE = FIN_WAIT_1
+     send finpacket
+
+//will have to send from both client and server again 
+if receiving recievePacket.FIN == 1 && recievePacket.ACK == 0:
+    (sending ACK:)
+    TCPPacket responsePacket
+    responsePacket.ACK flag= 1
+    responsePacket.FIN flag = 0
+    responsePacket.acknum = x + 1 (m comes from state)
+    responsePacket.ISN = y (this connection's sequence num)
+    window = bufferSize
+    send responsePacket
+    mySocket.STATE = CLOSE_WAIT
+
+    (sending FIN:)
+    TCPPacket responsePacket2
+    responsePacket2.ACK flag = 0
+    responsePacket2.FIN flag = 1
+    responsePacket2.acknum = x + 1 (same as last packet)
+    responsePacket2.ISN = y (same as other packet being sent)
+    window = bufferSize
+    send repsonsePacket2
+    mySocket.STATE = LAST_ACK
+
+
+if receivePacket.FIN == 0 && recievePacket.ACK == 1 && otherSocket.STATE == CLOSE_WAIT
+    (recieivng ACK after sending FIN)
+    mySocket.STATE = FIN_WAIT_2
+    //not sure if this above conditional is needed???
+
+if receiving recievePacket.FIN == 1 && recievePacket.ACK == 0 && otherSocket.STATE == LAST_ACK
+    (recieving FIN after receiving ACK, Sending final ACK)
+    TCPPacket finalize
+    finalize.FIN flag = 0
+    finalize.ACK flag = 1
+    finalize.ISN = x + 1 (this connections seq )
+    finalize.acknum = y + 1 (this connections ack num)
+    window = bufferSize
+    send finalize
+    mySocket.STATE = CLOSED
+    close connection
+
+if recieving recievePacket.ACK == 1 && otherSocket.STATE = CLOSED
+    mySocket.STATE = CLOSED
+
+  
+
+FLOW CONTROL PSUEDOCODE
+    we send a window of packets, when we recieve ack's we slide the window by increasing seqNum 
+    if i dont receive ack after some time resend all packets 
+
+if(socket.state == ESTABLISHED && receivePacket.data_flag == 1)
+    //if the data flag is marked then we apply flow control
+    packetCount = 0
+    if((lastByteSent - lastByteAcked) < advertisedWindow )
+        //build packet to send need to understand how to 
+
+
+
+  
+  //SENDER BUFFER 
+  isWrapped = FALSE
+  if(lastSent < lastAck)
+    isWrapped = TRUE
+  //RECIEVER BUFFER 
+  if(lastRead < lastRecieved)
+    isWrapped = TRUE
+ //WRITE/SEND BUFFER (only on client)
+  if(lastWritten < lastAck)
+    isWrapped = TRUE
+    
