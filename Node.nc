@@ -174,13 +174,14 @@ implementation{
       serverAddr.port = destPort;
       serverAddr.addr = destination;
       err = call Transport.connect(sock, &serverAddr);
-      if(err != SUCCESS) return;
       //implement error handling 
+      if(err != SUCCESS) return;
       //start timer 
       //need to do write
       err = call Transport.close(sock);
+      //error handling
       if(err != SUCCESS) return;
-      //implement error handling 
+
    }
 
    event void CommandHandler.setAppServer(){}

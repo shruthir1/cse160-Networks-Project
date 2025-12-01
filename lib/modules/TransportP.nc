@@ -29,25 +29,25 @@ implementation {
        
     }
 
-    // socket_t getSocket (uint8_t destPort, uint8_t srcPort){
-    //     socket_store_t sock;
-    //     uint16_t i = 0;
-    //     uint16_t size = call socketQueue.size();
+    socket_t getSocket (uint8_t destPort, uint8_t srcPort){
+        socket_store_t *sock;
+        uint16_t i = 0;
+        uint16_t size = call socketQueue.size();
 
-    //     for(i = 0; i < size-1; i++){
-    //          sock = call socketQueue.element(i);
-    //         if(sock.dest.port == destPort && sock.src == srcPort){
-    //             return i;
-    //         }
-    //     }
+        for(i = 0; i < size-1; i++){
+             sock = call socketQueue.element(i);
+            if(sock->dest.port == destPort && sock->src == srcPort){
+                return i;
+            }
+        }
 
-    //     return -1;
-    // }
+        return -1;
+    }
 
 
     command socket_t Transport.socket(){
         //get a socket if one is available state should be closed 
-        socket_store_t sockStore;
+        socket_store_t sockStore; //this is on the stack scope does not extend after function ends
         dbg(TRANSPORT_CHANNEL, "socket()\n");
         sockStore.state = CLOSED;
         sockStore.flag = 0;
@@ -72,6 +72,11 @@ implementation {
             return FAIL;
         }
         mySocket = call socketQueue.element(fd-1);
+        //err handling 
+        if(mySocket == NULL){
+            dbg(TRANSPORT_CHANNEL, "socket was invalid");
+            return FAIL;
+        }
         dbg(TRANSPORT_CHANNEL, "mySocket: %p\n", mySocket);
         //only use arrows on pointer vars 
         dbg(TRANSPORT_CHANNEL, "mySocket.src before: %d, addr->port: %d\n", mySocket->src, addr->port);
@@ -141,14 +146,68 @@ implementation {
 
     //when a packet is recieved there are multiple courses of action 
     command error_t Transport.receive(pack* msg){
-        
-        //should handle data flow
+        uint8_t srcPort = 0;
+        uint8_t destPort = 0;
+        uint8_t seq = 0;
+        uint8_t lastAck = 0;
+        uint8_t flags = 0;
+        pack myNewMsg;
+        socket_store_t *Qsocket;
+        //packet for replying 
+        tcp_pack* myTCPPack;
+        //casting pack to tcp_pack type 
+        tcp_pack* myMsg = (tcp_pack*)(msg->payload);
+        myTCPPack = (tcp_pack*)(myNewMsg.payload);
+         //error handling 
         if(msg == NULL){
             dbg(TRANSPORT_CHANNEL, "recieved packet is null\n");
             return FAIL;
         }
 
         dbg(TRANSPORT_CHANNEL, "received a packet!\n");
+
+        //extract TCP header info from received packet 
+        srcPort = myMsg->srcPort;
+        destPort = myMsg->destPort;
+        seq = myMsg->ACK;
+        flags = myMsg->flags;
+
+        Qsocket = call socketQueue.element(getSocket(srcPort, destPort));
+        
+
+        if(Qsocket->state == LISTEN && flags == SYN_FLAG ){
+            //we no longer need to listen for a SYN, we recieved one 
+             
+            dbg(TRANSPORT_CHANNEL, "server received a SYN!");
+            Qsocket->state = SYN_RCVD;
+            myTCPPack->destPort = Qsocket->dest.port;
+            myTCPPack->srcPort = Qsocket->src;
+            myTCPPack->seq = 1;
+            myTCPPack->ACK = (myTCPPack->seq)++;
+            myTCPPack->flags = SYN_ACK_FLAG;
+            call Sender.makePack(&myNewMsg, TOS_NODE_ID, Qsocket->dest.addr, PROTOCOL_TCP, 0, PACKET_MAX_PAYLOAD_SIZE);
+            call Sender.send(myNewMsg, Qsocket->dest.addr);
+            dbg(TRANSPORT_CHANNEL, "just sent SYN-ACK packet\n");
+            // call Transport.listen(fd); //call listen again so we can evalute SYN_RCVD??
+
+        } 
+        
+
+        if (Qsocket->state == SYN_RCVD && flags == SYN_ACK_FLAG ){
+            //SENDER SENDS LAST ACK
+            dbg(TRANSPORT_CHANNEL, "Client Received SYN-ACK, sending ACK \n");
+            Qsocket->state = ESTABLISHED; //connection has now been established, machine state changed
+            myTCPPack->destPort = Qsocket->dest.port;
+            myTCPPack->srcPort = Qsocket->src;
+            myTCPPack->seq = 1;
+            myTCPPack->ACK = (myTCPPack->seq)++;
+            myTCPPack->flags = ACK_FLAG;
+
+            call Sender.makePack(&myNewMsg, TOS_NODE_ID, Qsocket->dest.addr, PROTOCOL_TCP, 0,  PACKET_MAX_PAYLOAD_SIZE);
+            call Sender.send(myNewMsg, Qsocket->dest.addr);
+
+            dbg(TRANSPORT_CHANNEL, "sent SYN-ACK to client\n");
+        }
 
         
 
@@ -173,43 +232,7 @@ implementation {
 
         Qsocket->state = LISTEN;
 
-        if(Qsocket->state == LISTEN){
-            //we no longer need to listen for a SYN, we recieved one
-            // mySocket.dest.port = ;
-            // mySocket.dest.addr = msg->src; 
-             
-
-            Qsocket->state = SYN_RCVD;
-            myTCPPack->destPort = Qsocket->dest.port;
-            myTCPPack->srcPort = Qsocket->src;
-            myTCPPack->seq = 1;
-            myTCPPack->ACK = (myTCPPack->seq)++;
-            myTCPPack->flags = SYN_ACK_FLAG;
-            call Sender.makePack(&myMsg, TOS_NODE_ID, Qsocket->dest.addr, PROTOCOL_TCP, myTCPPack, PACKET_MAX_PAYLOAD_SIZE);
-            call Sender.send(myMsg, Qsocket->dest.addr);
-            dbg(TRANSPORT_CHANNEL, "just sent SYN-ACK packet\n");
-            // call Transport.listen(fd); //call listen again so we can evalute SYN_RCVD??
-
-        } 
-        
-
-        if (Qsocket->state == SYN_RCVD){
-            //SENDER SENDS LAST ACK
-            dbg(TRANSPORT_CHANNEL, "Received SYN-ACK, sending ACK \n");
-            Qsocket->state = ESTABLISHED; //connection has now been established, machine state changed
-
-            
-            myTCPPack->destPort = Qsocket->dest.port;
-            myTCPPack->srcPort = Qsocket->src;
-            myTCPPack->seq = 1;
-            myTCPPack->ACK = (myTCPPack->seq)++;
-            myTCPPack->flags = ACK_FLAG;
-
-            call Sender.makePack(&myMsg, TOS_NODE_ID, Qsocket->dest.addr, PROTOCOL_TCP, myTCPPack, PACKET_MAX_PAYLOAD_SIZE);
-            call Sender.send(myMsg, Qsocket->dest.addr);
-
-            dbg(TRANSPORT_CHANNEL, "sent SYN-ACK\n");
-        }
+        return SUCCESS; 
     }
 
     
@@ -244,7 +267,6 @@ implementation {
             Qsocket->state = FIN_WAIT_1;
             dbg(ROUTING_CHANNEL, "Starting close, send FIN \n");
             call Sender.send(myMsg, Qsocket->dest.addr);
-            call Transport.close(fd);
 
         }else if(Qsocket->state == FIN_WAIT_1){
             //SENDER
@@ -264,7 +286,7 @@ implementation {
             dbg(TRANSPORT_CHANNEL, "sending last ACK from Client Side\n");
             call Sender.makePack(&myMsg, TOS_NODE_ID, Qsocket->dest.addr, PROTOCOL_TCP, myTCPPack, PACKET_MAX_PAYLOAD_SIZE);
             call Sender.send(myMsg, Qsocket->dest.addr);
-            call Transport.close(fd);
+            
             
         }else if(Qsocket->state == TIME_WAIT){
             //SENDER
@@ -296,7 +318,7 @@ implementation {
 
             dbg(ROUTING_CHANNEL, "Acknowledging close, sending ACK and FIN \n");
             Qsocket->state == LAST_ACK;
-            call Transport.close(fd); //call close again when state changes and is not yet == CLOSED??
+            // call Transport.close(fd); //call close again when state changes and is not yet == CLOSED??
 
         }else if(Qsocket->state == LAST_ACK){
             //RECIEVER
