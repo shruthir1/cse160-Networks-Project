@@ -19,14 +19,11 @@ implementation {
     components new SimpleSendC(AM_PACK) as Sender;
     TransportP.Sender -> Sender;
 
-    // components new Receive() as Rcv;
-    // TransportP.Receive -> Rcv;
+    // components new AMReceiverC(AM_TRANSPORT) as TransportReceive;
+    // TransportP.Receive -> TransportReceive;
 
     components new QueueC(pack, 32) as packetQueue;
     TransportP.packetQueue -> packetQueue;
-
-    components new ListC(socket_store_t, 32) as SocketList;
-    TransportP.SocketList -> SocketList;
 
     components new QueueC(socket_store_t *, 32) as socketQueue;
     TransportP.socketQueue -> socketQueue;

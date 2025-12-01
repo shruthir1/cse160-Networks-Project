@@ -102,19 +102,85 @@ implementation{
    event void CommandHandler.printDistanceVector(){}
 
    event void CommandHandler.setTestServer( uint16_t address, uint8_t port){
+      //   # sock = socket()
+      //   # addr = socket_addr() #constructor
+      //   # addr.port = port
+      //   # addr.addr = address
+      //   # bind(sock, addr)
+      //   # startTimer ???
+      //   # listen(sock)
+      //   # newSock = accept(sock)
+      //   # buffSize = 100
+      //   # buff = [None] * buffSize
+      //   # read(newSock, buff, buffSize)
+      //   # print(buff)
+      //   # close(newSock)
       socket_t sock; 
+      socket_t clientSock;
       socket_addr_t addr;
+      error_t err;
       dbg(GENERAL_CHANNEL, "TEST SERVER EVENT\n");
       sock = call Transport.socket();
       addr.addr = TOS_NODE_ID;
       addr.port = port;
-      call Transport.bind(sock, &addr);
+      err = call Transport.bind(sock, &addr);
+      if(err != SUCCESS){
+         return;
+      }
+      //start timer
+      err = call Transport.listen(sock);
+      //implement error handle
+      if(err != SUCCESS) return;          
+      clientSock = call Transport.accept(sock);
+      //need to still add read()
+      err = call Transport.close(clientSock);
+      //error handling 
+      if(err != SUCCESS) return;
+
+
+
    }
 
-   event void CommandHandler.setTestClient(){
-      socket_t sock;
+   event void CommandHandler.setTestClient(uint16_t destination, uint8_t srcPort, uint8_t destPort, uint16_t transferCount){
+      //   # sock = socket()
+      //   # addr = socket_addr()
+      //   # addr.port = srcPort
+      //   # addr.addr = NODE_ID
+      //   # bind(sock, addr)
+      //   # serverAddr = socket_addr()
+      //   # serverAddr.port = destPort
+      //   # serverAddr.addr = destination
+      //   # connect(fd, serverAddr)
+      //   # startTimer ???
+      //   # buff = [None] * transferCount
+      //   # for i in range(transferCount):
+      //       # buff[i] = i
+      //   # write(sock, buff, transferCount)
+      //   #print(buff)
+      //   #close(sock)
+
+      socket_t sock; 
+      socket_t clientSock;
+      socket_addr_t addr;
+      socket_addr_t serverAddr;
+      error_t err;
       dbg(GENERAL_CHANNEL, "TEST CLIENT EVENT\n");
       sock = call Transport.socket();
+      addr.addr = TOS_NODE_ID;
+      addr.port = srcPort;
+      err = call Transport.bind(sock, &addr);
+      if(err != SUCCESS) return;
+
+      serverAddr.port = destPort;
+      serverAddr.addr = destination;
+      err = call Transport.connect(sock, &serverAddr);
+      if(err != SUCCESS) return;
+      //implement error handling 
+      //start timer 
+      //need to do write
+      err = call Transport.close(sock);
+      if(err != SUCCESS) return;
+      //implement error handling 
    }
 
    event void CommandHandler.setAppServer(){}
