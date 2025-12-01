@@ -22,10 +22,10 @@ def main():
     s.addChannel(s.TRANSPORT_CHANNEL);
 
     s.runTime(300);
-    s.testServer(5, 1234);
+    s.testServer(1);
     s.runTime(60);
 
-    s.testClient(5, 4321, 1234, 100);
+    s.testClient(4);
     s.runTime(1);
     s.runTime(1000);
 

@@ -27,6 +27,10 @@ implementation {
 
     components new ListC(socket_store_t, 32) as SocketList;
     TransportP.SocketList -> SocketList;
+
+    components new QueueC(socket_store_t *, 32) as socketQueue;
+    TransportP.socketQueue -> socketQueue;
+
 }
 
 

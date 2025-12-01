@@ -13,6 +13,8 @@ class TestSim:
     CMD_PING = 0
     CMD_NEIGHBOR_DUMP = 1
     CMD_ROUTE_DUMP=3
+    CMD_TEST_CLIENT = 4
+    CMD_TEST_SERVER = 5
     CMD_ROUTE = 10
     CMD_FLOOD = 31
     
@@ -135,7 +137,8 @@ class TestSim:
     def routeDMP(self, destination):
         self.sendCMD(self.CMD_ROUTE_DUMP, destination, "routing command")
     
-    def testServer(self, address, port):
+    def testServer(self, destination):
+        self.sendCMD(self.CMD_TEST_SERVER, destination, "test server" )
         # sock = socket()
         # addr = socket_addr() #constructor
         # addr.port = port
@@ -151,7 +154,8 @@ class TestSim:
         # close(newSock)
         return
 
-    def testClient(self, destination, srcPort, destPort, transferCount):
+    def testClient(self, destination):
+        self.sendCMD(self.CMD_TEST_CLIENT, destination, "test client" )
         # sock = socket()
         # addr = socket_addr()
         # addr.port = srcPort

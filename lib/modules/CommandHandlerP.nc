@@ -75,7 +75,9 @@ implementation{
 
                 case CMD_TEST_SERVER:
                     dbg(COMMAND_CHANNEL, "Command Type: Client\n");
-                    signal CommandHandler.setTestServer();
+                    // dbg(COMMAND_CHANNEL, buff[0]);
+                    // dbg(COMMAND_CHANNEL, buff[1]);
+                    signal CommandHandler.setTestServer(buff[0], buff[1]);
                     break;
                     
                 //A flood will only need a given string as a payload, since it broadcasts first.

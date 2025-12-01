@@ -101,9 +101,21 @@ implementation{
 
    event void CommandHandler.printDistanceVector(){}
 
-   event void CommandHandler.setTestServer(){}
+   event void CommandHandler.setTestServer( uint16_t address, uint8_t port){
+      socket_t sock; 
+      socket_addr_t addr;
+      dbg(GENERAL_CHANNEL, "TEST SERVER EVENT\n");
+      sock = call Transport.socket();
+      addr.addr = TOS_NODE_ID;
+      addr.port = port;
+      call Transport.bind(sock, &addr);
+   }
 
-   event void CommandHandler.setTestClient(){}
+   event void CommandHandler.setTestClient(){
+      socket_t sock;
+      dbg(GENERAL_CHANNEL, "TEST CLIENT EVENT\n");
+      sock = call Transport.socket();
+   }
 
    event void CommandHandler.setAppServer(){}
 

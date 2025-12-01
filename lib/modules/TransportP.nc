@@ -13,6 +13,7 @@ module TransportP {
     // uses interface PacketHandler;
     uses interface Queue<pack> as packetQueue; //tinyOS has its own Queue interface :D 
     uses interface List<socket_store_t> as SocketList; //socket_t is an index to the array of sockets we  have 
+    uses interface Queue<socket_store_t *> as socketQueue;
 }
 
 implementation {
@@ -29,43 +30,59 @@ implementation {
        
     }
 
-    socket_t getSocket (uint8_t destPort, uint8_t srcPort){
-        socket_store_t currSocket;
-        uint16_t i = 0;
-        uint16_t size = call SocketList.size();
+    // socket_t getSocket (uint8_t destPort, uint8_t srcPort){
+    //     socket_store_t sock;
+    //     uint16_t i = 0;
+    //     uint16_t size = call socketQueue.size();
 
-        for(i = 0; i < size; i++ ){
-            currSocket = call SocketList.get(i);
-            if(currSocket.dest.port == destPort && currSocket.src == srcPort){
-                return i;
-            }
-        }
+    //     for(i = 0; i < size-1; i++){
+    //          sock = call socketQueue.element(i);
+    //         if(sock.dest.port == destPort && sock.src == srcPort){
+    //             return i;
+    //         }
+    //     }
 
-        return -1;
-    }
+    //     return -1;
+    // }
 
 
     command socket_t Transport.socket(){
         //get a socket if one is available state should be closed 
         socket_store_t sockStore;
+        dbg(TRANSPORT_CHANNEL, "socket()\n");
         sockStore.state = CLOSED;
         sockStore.flag = 0;
         sockStore.src = 0;
         sockStore.dest.port = 0;
         sockStore.dest.addr = 0;
-
-        call SocketList.pushback(sockStore);
-        return call SocketList.size();
+        dbg(TRANSPORT_CHANNEL, "fd before pushback: %d\n", call socketQueue.size());
+        // call SocketList.pushback(sockStore);
+        call socketQueue.enqueue(&sockStore);
+        dbg(TRANSPORT_CHANNEL, "returning fd: %d\n", call socketQueue.size());
+        return call socketQueue.size();
 
     }
 
     command error_t Transport.bind(socket_t fd, socket_addr_t *addr){ 
         //bind a socket with an address 
         //get() is giving a copy of whats in the list by using a pointer we're able to interact what whats directly in the list (and change it)
-        socket_store_t mySocket = call SocketList.get(fd);
+        socket_store_t *mySocket;
+        dbg(TRANSPORT_CHANNEL, "bind()\n");
+        dbg(TRANSPORT_CHANNEL, "fd: %d\n", fd);
+        if(fd <= 0 || fd > call socketQueue.size() || addr == NULL){
+            dbg(TRANSPORT_CHANNEL, "invalid parameter");
+            return FAIL;
+        }
+        //mySocket = call SocketList.get(fd);
+        mySocket = call socketQueue.element(fd-1);
+        dbg(TRANSPORT_CHANNEL, "mySocket: %p\n", mySocket);
         //only use arrows on pointer vars 
-        mySocket.src = addr->port;
+        dbg(TRANSPORT_CHANNEL, "mySocket.src before: %d, addr->port: %d\n", mySocket->src, addr->port);
+        mySocket->src = addr->port;
+        dbg(TRANSPORT_CHANNEL, "mySocket.src after: %d\n", mySocket->src);
         //mySocket.state does not change on bind()
+
+        return SUCCESS;
         
     }
 
@@ -147,7 +164,7 @@ implementation {
             // mySocket.dest.port = ;
             // mySocket.dest.addr = msg->src; 
             // call SocketList.pushback(mySocket); 
-            
+
             mySocket.state = SYN_RCVD;
             myTCPPack->destPort = mySocket.dest.port;
             myTCPPack->srcPort = mySocket.src;
