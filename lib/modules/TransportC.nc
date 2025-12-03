@@ -19,6 +19,9 @@ implementation {
     components new TimerMilliC() as TCPtimer;
     TransportP.TCPtimer -> TCPtimer;
 
+    components new TimerMilliC() as timeWaitTimer;
+    TransportP.timeWaitTimer -> timeWaitTimer;
+
     components new SimpleSendC(AM_PACK) as Sender;
     TransportP.Sender -> Sender;
 
@@ -34,6 +37,15 @@ implementation {
 
     components new QueueC(socket_store_t *, 32) as socketQueue;
     TransportP.socketQueue -> socketQueue;
+
+    components new QueueC(socket_store_t *, 32) as timeWaitQueue;
+    TransportP.timeWaitQueue -> timeWaitQueue;
+
+    components new QueueC(pack*, 32) as sendQueue;
+    TransportP.sendQueue -> sendQueue;
+
+    components new PoolC(pack, 32) as sendPool;
+    TransportP.sendPool -> sendPool ;
 
     components new PoolC(socket_store_t, 32) as sockPool;
     TransportP.socketPool -> sockPool;
