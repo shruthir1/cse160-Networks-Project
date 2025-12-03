@@ -52,6 +52,8 @@ implementation{
        // us to allocate space in a pool where pointers can be retrieved. See
        // SimpleSendC to see where we allocate space. Be sure to put the values
        // back into the queue once you are done.
+      // dbg(GENERAL_CHANNEL, "SimpleSend.send()\n");
+      // logPack(&msg, GENERAL_CHANNEL);
       if(!call Pool.empty()){
          sendInfo *input;
 
@@ -115,6 +117,7 @@ implementation{
     *	error_t - Returns SUCCESS, EBUSY when the system is too busy using the radio, or FAIL.
     */
    error_t send(uint16_t src, uint16_t dest, pack *message){
+      // dbg(GENERAL_CHANNEL, "send()\n");
       if(!busy){
           // We are putting data into the payload of the pkt struct. getPayload
           // aquires the payload pointer from &pkt and we type cast it to our own
@@ -125,7 +128,9 @@ implementation{
          *msg = *message;
 
          // Attempt to send the packet.
-         //need to add dbg
+         // dbg(GENERAL_CHANNEL, "Attempting to send packet: %p to dest: %d, src: %d\n", &pkt, dest, src);
+         
+         // logPack(&pkt, GENERAL_CHANNEL);
          if(call AMSend.send(dest, &pkt, sizeof(pack)) ==SUCCESS){
             // See AMSend.sendDone(msg, error) to see what happens after.
             busy = TRUE;
@@ -149,7 +154,14 @@ implementation{
    // to send again at that point.
    event void AMSend.sendDone(message_t* msg, error_t error){
       //Clear Flag, we can send again.
+      // void* payload;
+      // pack* p;
+
+      // dbg(GENERAL_CHANNEL, "&pkt: %p, msg: %p\n", &pkt, msg);
+      // payload = call Packet.getPayload(raw_msg, sizeof(CommandMsg));
+      // p = (pack*) payload;
       if(&pkt == msg){
+         // logPack(&pkt, GENERAL_CHANNEL);
          busy = FALSE;
          postSendTask();
       }

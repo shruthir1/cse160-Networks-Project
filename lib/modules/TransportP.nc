@@ -32,7 +32,8 @@ implementation {
     void dumpTCP(tcp_pack* tcp);
 
     void dumpPack(pack* pkt){
-        dbg(TRANSPORT_CHANNEL, "source: %d, dest: %d, protocol: %d, payload: %28x\n", pkt->src, pkt->dest, pkt->protocol, pkt->payload);
+        // dbg(TRANSPORT_CHANNEL, "source: %d, dest: %d, protocol: %d, payload: %28x\n", pkt->src, pkt->dest, pkt->protocol, pkt->payload);
+        logPack(pkt, TRANSPORT_CHANNEL);
     } 
 
     void dumpTCP(tcp_pack* tcp){
@@ -208,7 +209,7 @@ implementation {
             dbg(TRANSPORT_CHANNEL, "recieved packet is null\n");
             return FAIL;
         }
-        if(msg->dest != TOS_NODE_ID || msg->protocol != PROTOCOL_TCP){
+        if(msg->protocol != PROTOCOL_TCP){
             return SUCCESS;
         }
         dbg(TRANSPORT_CHANNEL, "received a packet! : %p\n", msg);
@@ -438,7 +439,7 @@ implementation {
             pkt = (pack*) payload;
             // dbg(TRANSPORT_CHANNEL, "got packet: %p\n", pkt);
             
-            // dbg(TRANSPORT_CHANNEL, "source: %d, dest: %d, protocol: %d\n", pkt->src, pkt->dest, pkt->protocol);
+            dbg(TRANSPORT_CHANNEL, "source: %d, dest: %d, protocol: %d\n", pkt->src, pkt->dest, pkt->protocol);
             err = call Transport.receive(pkt);
 
             call packetPool.put(raw_msg);
