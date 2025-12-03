@@ -29,6 +29,9 @@ implementation{
             case PROTOCOL_ROUTING:
                 signal PacketHandler.gotRouted(payload);
                 break;
+            case PROTOCOL_TCP:
+                dbg(HANDLER_CHANNEL, "received TCP packet\n");
+                break;
         }  
         dbg(HANDLER_CHANNEL, "Package Payload: %s\n", incomingMsg->payload);
         return SUCCESS;

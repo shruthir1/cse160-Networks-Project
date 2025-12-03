@@ -70,14 +70,15 @@ implementation{
 
                 case CMD_TEST_CLIENT:
                     dbg(COMMAND_CHANNEL, "Command Type: Client\n");
-                    signal CommandHandler.setTestClient(msg->dest, 321, 123, 10);
+                    // dbg(COMMAND_CHANNEL, "My Address: %d, dest: %d\n", TOS_NODE_ID, msg->dest);
+                    signal CommandHandler.setTestClient(msg->dest, 21, 12, 10);
                     break;
 
                 case CMD_TEST_SERVER:
                     dbg(COMMAND_CHANNEL, "Command Type: Client\n");
                     // dbg(COMMAND_CHANNEL, buff[0]);
                     // dbg(COMMAND_CHANNEL, buff[1]);
-                    signal CommandHandler.setTestServer(msg->dest, 123);
+                    signal CommandHandler.setTestServer(TOS_NODE_ID, 12);
                     break;
                     
                 //A flood will only need a given string as a payload, since it broadcasts first.

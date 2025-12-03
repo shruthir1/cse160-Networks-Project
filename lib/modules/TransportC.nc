@@ -13,20 +13,31 @@ implementation {
     // components PacketHandlerC as PacketHandler;
     // TransportP.PacketHandler -> PacketHandler;
 
+    components ActiveMessageC;
+    TransportP.Packet -> ActiveMessageC;
+
     components new TimerMilliC() as TCPtimer;
     TransportP.TCPtimer -> TCPtimer;
 
     components new SimpleSendC(AM_PACK) as Sender;
     TransportP.Sender -> Sender;
 
-    // components new AMReceiverC(AM_TRANSPORT) as TransportReceive;
-    // TransportP.Receive -> TransportReceive;
+    components new AMReceiverC(AM_PACK) as TransportReceive;
+    TransportP.Receive -> TransportReceive;
 
-    components new QueueC(pack, 32) as packetQueue;
+    components new PoolC(message_t, 32) as packetPool;
+    TransportP.packetPool -> packetPool;
+
+
+    components new QueueC(message_t *, 32) as packetQueue;
     TransportP.packetQueue -> packetQueue;
 
     components new QueueC(socket_store_t *, 32) as socketQueue;
     TransportP.socketQueue -> socketQueue;
+
+    components new PoolC(socket_store_t, 32) as sockPool;
+    TransportP.socketPool -> sockPool;
+
 
 }
 

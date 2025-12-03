@@ -125,6 +125,7 @@ implementation{
          *msg = *message;
 
          // Attempt to send the packet.
+         //need to add dbg
          if(call AMSend.send(dest, &pkt, sizeof(pack)) ==SUCCESS){
             // See AMSend.sendDone(msg, error) to see what happens after.
             busy = TRUE;
@@ -152,6 +153,8 @@ implementation{
          busy = FALSE;
          postSendTask();
       }
+
+      //add dbg
    }
 
    command void SimpleSend.makePack(pack *Package, uint16_t src, uint16_t dest, uint16_t protocol, uint8_t* payload, uint8_t length){

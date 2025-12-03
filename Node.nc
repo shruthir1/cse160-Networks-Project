@@ -165,6 +165,7 @@ implementation{
       socket_addr_t serverAddr;
       error_t err;
       dbg(GENERAL_CHANNEL, "TEST CLIENT EVENT\n");
+      dbg(GENERAL_CHANNEL, "destination: %d, srcPort: %d, destPort: %d, transferCount: %d\n", destination, srcPort, destPort, transferCount);
       sock = call Transport.socket();
       addr.addr = TOS_NODE_ID;
       addr.port = srcPort;
@@ -172,7 +173,8 @@ implementation{
       if(err != SUCCESS) return;
 
       serverAddr.port = destPort;
-      serverAddr.addr = destination;
+      // serverAddr.addr = destination;
+      serverAddr.addr = 1; //hard-coding for now 
       err = call Transport.connect(sock, &serverAddr);
       //implement error handling 
       if(err != SUCCESS) return;
