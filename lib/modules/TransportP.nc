@@ -170,47 +170,63 @@ implementation {
         uint16_t bytesWritten;
         pack * sendPack;
 
+        //socket we are writing from 
         socket_store_t *Qsocket = call socketQueue.element(fd);
         
         dbg(TRANSPORT_CHANNEL, "write()");
-        if(Qsocket->state != ESTABLISHED) return 0; 
-        if(Qsocket->lastWritten < Qsocket->lastAck) isWrapped = TRUE;
+        if(Qsocket->state != ESTABLISHED) return 0; //all other states indicated we are still in handshake 
+        if(Qsocket->lastWritten < Qsocket->lastAck){
+            isWrapped = TRUE; 
+        } else{
+            isWrapped = FALSE;
+        } 
 
+        //if pool is empty then we dont have data to send, sendPool stores all the packets we want to send 
         if(! call sendPool.empty()) return 0;
 
-        sendPack = call sendPool.get();
+        sendPack = call sendPool.get(); 
 
 
         if(!isWrapped){
             if(Qsocket->lastSent - Qsocket->lastAck < Qsocket->effectiveWindow){
+                //data being put into the buffer should not be larger than the buffer size 
                if(Qsocket->lastAck + bufflen <= SOCKET_BUFFER_SIZE){
+                    //copying from socket into buffer 
                     memcpy(&Qsocket->sendBuff[Qsocket->lastAck], buff, bufflen);
                     bytesWritten = bufflen;
 
                }else{
+                    //if we are out of bounds then we only send the amount of data that would not overwhelm the buffer
                     memcpy(&Qsocket->sendBuff[Qsocket->lastAck], buff, SOCKET_BUFFER_SIZE - Qsocket->lastAck);
                     bytesWritten = SOCKET_BUFFER_SIZE - Qsocket->lastAck;
                }
             }
-        }else{
+        }else{ //if window is wrapped 
+            //we flip the subtraction statement
             if(Qsocket->lastAck - Qsocket->lastSent < Qsocket->effectiveWindow){
+                //checking if in bounds again
                 if(Qsocket->lastAck + bufflen <= SOCKET_BUFFER_SIZE){
                     memcpy(&Qsocket->sendBuff[Qsocket->lastAck], buff, bufflen);
                     bytesWritten = bufflen;
                 }else{
+                    //if not in bounds only send capable data amount 
                     memcpy(&Qsocket->sendBuff[Qsocket->lastAck], buff, SOCKET_BUFFER_SIZE - Qsocket->lastAck);
                     bytesWritten = SOCKET_BUFFER_SIZE - Qsocket->lastAck;
 
                 }
             }
         }
-    
-        makeTCPpack(&outgoingTCPPack, Qsocket->destPort, Qsocket->srcPort, Qsocket->seq, Qsocket->lastAck,  Qsocket->lastWritten, DATA_FLAG, Qsocket->effectiveWindow, buff );
-        Sender.makePack(outgoingPack,  Qsocket->dest.addr, TOS_NODE_ID, PROTOCOL_TCP, (uint8_t*)&outgoingTCPPack, sizeof(tcp_pack) );
+
+        //make and send the TCP back to the server to load of their buffer and read 
+        makeTCPpack(&outgoingTCPPack, Qsocket->dest.addr, Qsocket->src, outgoingTCPPack.seq, Qsocket->lastAck,  Qsocket->lastWritten, DATA_FLAG, Qsocket->effectiveWindow, buff );
+        call Sender.makePack(&outgoingPack,  Qsocket->dest.addr, TOS_NODE_ID, PROTOCOL_TCP, (uint8_t*)&outgoingTCPPack, sizeof(tcp_pack) );
        //this should be done in a task that pulls of a queue 
-        Sender.send(outgoingPack,  Qsocket->dest.addr);
+        call Sender.send(outgoingPack,  Qsocket->dest.addr);
+        //we should also be recording the time this was sent into the transmission queue 
+
+        //sliding the window 
         Qsocket->lastWritten+= bytesWritten;
-        Qsocket-> lastAcked+= bytesWritten;
+        Qsocket-> lastAck+= bytesWritten;
         return bytesWritten;
             
     }
@@ -288,8 +304,8 @@ implementation {
         // dbg(TRANSPORT_CHANNEL, "outgoingPack: %p\n", outgoingPack);
     
         //debug using dumpTCP and check global var usage here 
-        dumpTCP(&outgoingTCPPack); //this is the packet we loaded info into and created
-        dumpTCP(&incomingTCPpack); //this is the incoming tcp header
+        // dumpTCP(&outgoingTCPPack); //this is the packet we loaded info into and created
+        // dumpTCP(&incomingTCPpack); //this is the incoming tcp header
 
 
         Qsocket = call socketQueue.element(getSocket(srcPort, destPort));

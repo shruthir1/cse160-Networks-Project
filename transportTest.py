@@ -16,6 +16,7 @@ def main():
     # Turn on all of the sensors.
     s.bootAll();
 
+
     # Add the main channels. These channels are declared in includes/channels.h
     s.addChannel(s.COMMAND_CHANNEL);
     s.addChannel(s.GENERAL_CHANNEL);
@@ -28,8 +29,6 @@ def main():
     s.testClient(4);
     s.runTime(1);
     s.runTime(1000);
-
-#here is where the accpet and connect pseudocode implementation might go 
 
 if __name__ == '__main__':
     main()

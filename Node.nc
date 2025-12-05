@@ -133,6 +133,7 @@ implementation{
       if(err != SUCCESS) return;          
       clientSock = call Transport.accept(sock);
       //need to still add read()
+      // call Transport.read();
       err = call Transport.close(clientSock);
       //error handling 
       if(err != SUCCESS) return;
@@ -180,6 +181,7 @@ implementation{
       if(err != SUCCESS) return;
       //start timer 
       //need to do write
+      // call Transport.write();
       err = call Transport.close(sock);
       //error handling
       if(err != SUCCESS) return;
