@@ -14,6 +14,8 @@
 #include "includes/channels.h"
 #include "includes/protocol.h"
 #include "includes/floodpack.h"
+#include "includes/chat.h"
+
 
 module Node{
    uses interface Boot;
@@ -29,6 +31,8 @@ module Node{
    uses interface PacketHandler;
    uses interface CommandHandler;
    uses interface Transport;
+
+   uses interface List<chatSession> as sessionList;
 }
 
 implementation{
@@ -188,7 +192,62 @@ implementation{
 
    }
 
-   event void CommandHandler.setAppServer(){}
+   event void CommandHandler.setAppServer(){
+      socket_t sock; 
+      socket_t clientSock;
+      socket_addr_t addr;
+      error_t err;
+      nx_uint8_t serverCMDbuffer[SERVER_CMD_BUFFER_SIZE];
+      dbg(GENERAL_CHANNEL, "APP SERVER EVENT\n");
+      sock = call Transport.socket();
+      addr.addr = SERVER_ADDRESS;
+      addr.port = SERVER_LISTEN_PORT;
+      err = call Transport.bind(sock, &addr);
+      if(err != SUCCESS){
+         return;
+      }
+      //start timer
+      err = call Transport.listen(sock);
+      //implement error handle
+      if(err != SUCCESS) return;          
+      clientSock = call Transport.accept(sock);
+      call Transport.read(clientSock, serverCMDbuffer, SERVER_CMD_BUFFER_SIZE);
+      /*
+         parse command out of server buffer, looking for white space or \r
+         figure out command 
+         switch(command):
+            case hello
+               username, clientPort into sessionList
+            case whisper
+               
+            case msg 
+               
+            case listusr
+               print all users from sessionList
+      
+      */
 
-   event void CommandHandler.setAppClient(){}
+
+   }
+
+   event void CommandHandler.setAppClient(uint8_t clientPort){
+      socket_t sock; 
+      socket_addr_t addr;
+      socket_addr_t serverAddr;
+      error_t err;
+      nx_uint8_t clientbuffer[CLIENT_CMD_BUFFER_SIZE];
+      dbg(GENERAL_CHANNEL, "APP CLIENT EVENT\n");
+      sock = call Transport.socket();
+      addr.addr = TOS_NODE_ID;
+      addr.port = clientPort;
+      err = call Transport.bind(sock, &addr);
+      if(err != SUCCESS){
+         return;
+      }
+
+     serverAddr.addr = SERVER_ADDRESS;
+     serverAddr.port = SERVER_LISTEN_PORT;
+     err = call Transport.connect(sock, &serverAddr);
+     
+   }
 }

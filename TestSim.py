@@ -15,8 +15,11 @@ class TestSim:
     CMD_ROUTE_DUMP=3
     CMD_TEST_CLIENT = 4
     CMD_TEST_SERVER = 5
+    CMD_SET_APP_CLIENT = 7
+    CMD_SET_APP_SERVER = 8
     CMD_ROUTE = 10
     CMD_FLOOD = 31
+    
     
     # CHANNELS - see includes/channels.h
     COMMAND_CHANNEL="command"
@@ -173,6 +176,13 @@ class TestSim:
         #print(buff)
         #close(sock)
         return
+
+    def setAppServer(self):
+        self.sendCMD(self.CMD_SET_APP_SERVER, 1, "set app server" )
+
+
+    def setAppClient(self, clientPort):
+        self.sendCMD(self.CMD_SET_APP_CLIENT, 4, "set app client" )
 
 
     def addChannel(self, channelName, out=sys.stdout):

@@ -10,8 +10,8 @@ implementation {
     components TransportP;
     Transport = TransportP.Transport;
     
-    // components PacketHandlerC as PacketHandler;
-    // TransportP.PacketHandler -> PacketHandler;
+    components PacketHandlerC as PacketHandler;
+    TransportP.PacketHandler -> PacketHandler;
 
     components ActiveMessageC;
     TransportP.Packet -> ActiveMessageC;
@@ -45,7 +45,7 @@ implementation {
     TransportP.sendQueue -> sendQueue;
 
     components new PoolC(pack, 32) as sendPool;
-    TransportP.sendPool -> sendPool ;
+    TransportP.sendPool -> sendPool;
 
     components new PoolC(socket_store_t, 32) as sockPool;
     TransportP.socketPool -> sockPool;

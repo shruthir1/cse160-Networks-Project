@@ -18,15 +18,15 @@ def main():
 
 
     # Add the main channels. These channels are declared in includes/channels.h
-    # s.addChannel(s.COMMAND_CHANNEL);
-    # s.addChannel(s.GENERAL_CHANNEL);
+    s.addChannel(s.COMMAND_CHANNEL);
+    s.addChannel(s.GENERAL_CHANNEL);
     s.addChannel(s.TRANSPORT_CHANNEL);
 
     s.runTime(300);
-    s.testServer(1);
+    s.setAppServer();
     s.runTime(60);
 
-    s.testClient(4);
+    s.setAppClient(3);
     s.runTime(1);
     s.runTime(1000);
 

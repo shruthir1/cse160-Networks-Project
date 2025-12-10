@@ -54,6 +54,7 @@ implementation{
        // back into the queue once you are done.
       // dbg(GENERAL_CHANNEL, "SimpleSend.send()\n");
       // logPack(&msg, GENERAL_CHANNEL);
+     
       if(!call Pool.empty()){
          sendInfo *input;
 
@@ -64,7 +65,11 @@ implementation{
          // Now that we have a value from the pool we can put it into our queue.
          // This is a FIFO queue.
          call Queue.enqueue(input);
-
+         if(msg.protocol == PROTOCOL_TCP){
+             dbg(GENERAL_CHANNEL, "TCP send info %p\n", input);
+             logPack(&input->packet, GENERAL_CHANNEL);
+         }
+        
          // Start a send task which will be delayed.
          postSendTask();
 
@@ -83,7 +88,10 @@ implementation{
          // it until we are successful. There is no limit on how many attempts
          // can be made.
          info = call Queue.head();
-
+         if(info->packet.protocol == PROTOCOL_TCP){
+            dbg(GENERAL_CHANNEL, "TCP info: %p\n", info);
+            logPack(&info->packet, GENERAL_CHANNEL);
+         }
          // Attempt to send it.
          if(SUCCESS == send(info->src,info->dest, &(info->packet))){
             //Release resources used if the attempt was successful
@@ -126,6 +134,10 @@ implementation{
 
          // This coppies the data we have in our message to this new packet type.
          *msg = *message;
+          if(msg->protocol == PROTOCOL_TCP){
+            dbg(GENERAL_CHANNEL, "msg: %p\n", msg);
+            logPack(msg, GENERAL_CHANNEL);
+         }
 
          // Attempt to send the packet.
          // dbg(GENERAL_CHANNEL, "Attempting to send packet: %p to dest: %d, src: %d\n", &pkt, dest, src);
@@ -134,6 +146,10 @@ implementation{
          if(call AMSend.send(dest, &pkt, sizeof(pack)) ==SUCCESS){
             // See AMSend.sendDone(msg, error) to see what happens after.
             busy = TRUE;
+            if(msg->protocol == PROTOCOL_TCP){
+               dbg(GENERAL_CHANNEL, "SEND SUCCESS! \n");
+               //logPack(msg, GENERAL_CHANNEL);
+            }
             return SUCCESS;
          }else{
              // This shouldn't really happen.

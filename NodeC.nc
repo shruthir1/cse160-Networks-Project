@@ -10,6 +10,7 @@
 #include <Timer.h>
 #include "includes/CommandMsg.h"
 #include "includes/packet.h"
+#include "includes/chat.h"
 
 configuration NodeC{
 }
@@ -49,4 +50,7 @@ implementation {
 
     components TransportC;     
     Node.Transport -> TransportC;
+
+    components new ListC(chatSession, MAX_NUM_OF_CHAT_CLIENTS) as sessionList;
+    Node.sessionList -> sessionList;
 }

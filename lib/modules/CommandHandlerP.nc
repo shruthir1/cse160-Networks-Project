@@ -80,7 +80,19 @@ implementation{
                     // dbg(COMMAND_CHANNEL, buff[1]);
                     signal CommandHandler.setTestServer(TOS_NODE_ID, 12);
                     break;
-                    
+
+                case CMD_SET_APP_CLIENT:
+                    dbg(COMMAND_CHANNEL, "Command Type: set app client\n");
+                    //hard coded for now
+                    signal CommandHandler.setAppClient(3);
+                    break;
+
+                case CMD_SET_APP_SERVER:
+                    dbg(COMMAND_CHANNEL, "Command Type: set app server\n");
+                    //hard coded for now
+                    signal CommandHandler.setAppServer();
+                    break;
+
                 //A flood will only need a given string as a payload, since it broadcasts first.
                 case CMD_FLOOD:
                     dbg(COMMAND_CHANNEL, "Command Type: Flood | Payload: %s\n",&buff[1]);

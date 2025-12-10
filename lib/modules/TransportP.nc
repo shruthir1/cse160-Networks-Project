@@ -11,7 +11,7 @@ module TransportP {
     uses interface Timer<TMilli> as timeWaitTimer; //timer for TIME_WAIT on close 
     uses interface SimpleSend as Sender;
     uses interface Receive;
-    // uses interface PacketHandler;
+    uses interface PacketHandler;
     uses interface Queue<message_t*> as packetQueue; //tinyOS has its own Queue interface :D 
     uses interface Queue<socket_store_t*> as timeWaitQueue;
     uses interface Queue<socket_store_t *> as socketQueue;
@@ -34,6 +34,9 @@ implementation {
     void makeTCPpack(tcp_pack* tcpPack, uint8_t destPort, uint8_t srcPort, uint16_t seq, uint8_t ACK, uint8_t lastACK, uint8_t flags, uint8_t window, uint8_t* payload);
     void dumpPack(pack* pkt);
     void dumpTCP(tcp_pack* tcp);
+    char* socketFlag(uint8_t flag);
+    char* socketState(enum socket_state state);
+    void dumpSocket(socket_store_t * sock);
 
     //dumpPack() will display the contents of a packet for debugging purposes
     void dumpPack(pack* pkt){
@@ -43,9 +46,81 @@ implementation {
 
     //dumpTCP() will display the contents of a tcp header packet for purposes
     void dumpTCP(tcp_pack* tcp){
-        dbg(TRANSPORT_CHANNEL, "destPort: %d, srcPort: %d, seq: %d, ACK: %d, lastACK: %d, flags: %d, window: %d, payload: %12x\n", tcp->destPort, tcp->srcPort, tcp->seq, tcp->ACK, tcp->lastACK, tcp->flags, tcp->window, tcp->payload);
+        dbg(TRANSPORT_CHANNEL, "destPort: %d, srcPort: %d, seq: %d, ACK: %d, lastACK: %d, flags: %s, window: %d, payload: %12x\n", tcp->destPort, tcp->srcPort, tcp->seq, tcp->ACK, tcp->lastACK, socketFlag(tcp->flags), tcp->window, tcp->payload);
     }
 
+    char* socketFlag(uint8_t flag){
+        switch(flag){
+            case DATA_FLAG:
+                return "DATA";
+                break;
+            case DATA_ACK_FLAG:
+                return "DATA ACK";
+                break;
+            case SYN_FLAG:
+                return "SYN";
+                break;
+            case SYN_ACK_FLAG:
+                return "SYN ACK";
+                break;
+            case ACK_FLAG:
+                return "ACK";
+                break;
+            case FIN_FLAG:
+                return "FIN";
+                break;
+            case FIN_ACK:
+                return "FIN ACK";
+                break;
+            default: 
+                return "UNKNOWN";
+                break;
+            
+        }
+    }
+
+    char* socketState(enum socket_state state){
+        switch(state){
+            case CLOSED:
+                return "CLOSED";
+                break;
+            case LISTEN:
+                return "LISTEN";
+                break;
+            case ESTABLISHED:
+                return "ESTABLISHED";
+                break;
+            case SYN_SENT:
+                return "SYN SENT";
+                break;
+            case SYN_RCVD:
+                return "SYN RECEIVED";
+                break;
+            case CLOSE_WAIT:
+                return "CLOSE_WAIT";
+                break;
+            case LAST_ACK:
+                return "LAST ACK";
+                break;
+            case FIN_WAIT_1:
+                return "FIN WAIT 1";
+                break;
+            case FIN_WAIT_2:
+                return "FIN WAIT 2";
+                break;
+            case TIME_WAIT:
+                return "TIME_WAIT";
+                break;
+            default:
+                return "UNKNOWN STATE";
+                break;
+        }   
+    }
+
+    void dumpSocket(socket_store_t * sock){
+        dbg(TRANSPORT_CHANNEL, "flag: %s, state: %s, src: %d, dest.addr: %d, dest.port: %d\n", socketFlag(sock->flag), socketState(sock->state), sock->src, sock->dest.addr, sock->dest.port);
+    
+    }
 
     /*
       TCP retransmit timer is expired, this is for reliability 
@@ -94,16 +169,17 @@ implementation {
     //obtains a socket, state must be closed because state hasn't changed yet 
     command socket_t Transport.socket(){
         //get a socket if one is available state should be closed 
-        socket_store_t sockStore; //this is on the stack scope does not extend after function ends
+        socket_store_t * sockStore; //this is on the stack scope does not extend after function ends
         dbg(TRANSPORT_CHANNEL, "socket()\n");
-        sockStore.state = CLOSED;
-        sockStore.flag = 0;
-        sockStore.src = 0;
-        sockStore.dest.port = 0;
-        sockStore.dest.addr = 0;
+        sockStore = call socketPool.get(); //similar to malloc()
+        sockStore->state = CLOSED;
+        sockStore->flag = 255;
+        sockStore->src = 255;
+        sockStore->dest.port = 255;
+        sockStore->dest.addr = 255;
         // dbg(TRANSPORT_CHANNEL, "fd before enqueue: %d\n", call socketQueue.size());
-        call socketPool.put(&sockStore);
-        call socketQueue.enqueue(&sockStore);
+        dumpSocket(sockStore);
+        call socketQueue.enqueue(sockStore);
         // dbg(TRANSPORT_CHANNEL, "returning fd: %d\n", call socketQueue.size());
         return call socketQueue.size();
 
@@ -119,17 +195,19 @@ implementation {
             dbg(TRANSPORT_CHANNEL, "invalid parameter\n");
             return FAIL;
         }
+        // dbg(TRANSPORT_CHANNEL, "socketQueue.size() = %d\n", call socketQueue.size());
         mySocket = call socketQueue.element(fd-1);
         //err handling 
         if(mySocket == NULL){
-            dbg(TRANSPORT_CHANNEL, "socket was invalid");
+            dbg(TRANSPORT_CHANNEL, "socket was invalid\n");
             return FAIL;
         }
         dbg(TRANSPORT_CHANNEL, "mySocket: %p\n", mySocket);
         //only use arrows on pointer vars 
         dbg(TRANSPORT_CHANNEL, "mySocket.src before: %d, addr->port: %d\n", mySocket->src, addr->port);
         mySocket->src = addr->port;
-        dbg(TRANSPORT_CHANNEL, "mySocket.src after: %d\n", mySocket->src);
+        // dbg(TRANSPORT_CHANNEL, "mySocket.src after: %d\n", mySocket->src);
+        dumpSocket(mySocket);
         //mySocket.state does not change on bind()
 
         return SUCCESS;
@@ -143,7 +221,7 @@ implementation {
          a destination associated with the destination address and port.
         if not return a null socket.
         */
-        dbg(TRANSPORT_CHANNEL, "accept()");
+        dbg(TRANSPORT_CHANNEL, "accept()\n");
         //going to be signaled from Transport.recieve();
         //basically needs to return a newly connected socket 
 
@@ -251,12 +329,13 @@ implementation {
         //ends up being randomized 
 
         //setting up the SYN packet
-       
-        makeTCPpack(&outgoingTCPPack, addr->port, 21, 1, 0, 0, SYN_FLAG, 0, tcpPayload);
+        dbg(TRANSPORT_CHANNEL, "called transport.connect()\n");
+        makeTCPpack(&outgoingTCPPack, addr->port, Qsocket->src, 1, 0, 0, SYN_FLAG, 0, tcpPayload);
         //making initial SYN pack
         call Sender.makePack(&outgoingPack, TOS_NODE_ID, addr->addr, PROTOCOL_TCP, (uint8_t*)&outgoingTCPPack, sizeof(tcp_pack)); //because a SYN packet has no TCP payload
         Qsocket->state = SYN_SENT;
-        dbg(TRANSPORT_CHANNEL, "Node %u State is %u \n", TOS_NODE_ID, Qsocket->state);
+        // dbg(TRANSPORT_CHANNEL, "Node %u State is %u \n", TOS_NODE_ID, Qsocket->state);
+        dumpSocket(Qsocket);
         // dbg(TRANSPORT_CHANNEL, "dest addr: %d, addr->addr: %d, protocol: %d\n", outgoingPack.dest, addr->addr, outgoingPack.protocol);
         dumpPack(&outgoingPack);
         post send();
@@ -287,6 +366,7 @@ implementation {
         socket_store_t *Qsocket;
         //packet for replying 
         tcp_pack* incomingTCPpack = (tcp_pack*)(msg->payload);
+        // dbg(TRANSPORT_CHANNEL, "called transport.receive()\n");
         makeTCPpack(&outgoingTCPPack, incomingTCPpack->destPort,incomingTCPpack->srcPort, incomingTCPpack->ACK, (incomingTCPpack->seq)++, incomingTCPpack->lastACK, incomingTCPpack->flags,  incomingTCPpack->window, tcpPayload);
       
         //ERROR HANDLING 
@@ -331,7 +411,7 @@ implementation {
             //SENDER SENDS LAST ACK
             dbg(TRANSPORT_CHANNEL, "Client Received SYN-ACK, sending ACK \n");
             Qsocket->state = ESTABLISHED; //connection has now been established, machine state changed
-            makeTCPpack(&incomingTCPpack, Qsocket->dest.port, Qsocket->src, outgoingTCPPack.seq +1, 1, incomingTCPpack->lastACK, ACK_FLAG,  incomingTCPpack->window, tcpPayload);
+            makeTCPpack(incomingTCPpack, Qsocket->dest.port, Qsocket->src, outgoingTCPPack.seq +1, 1, incomingTCPpack->lastACK, ACK_FLAG,  incomingTCPpack->window, tcpPayload);
             call Sender.makePack(&outgoingPack, TOS_NODE_ID, Qsocket->dest.addr, PROTOCOL_TCP, (uint8_t*)&outgoingTCPPack, sizeof(tcp_pack));
             call Sender.send(outgoingPack, Qsocket->dest.addr);
 
@@ -362,7 +442,7 @@ implementation {
             call timeWaitTimer.startOneShot(100); //waiting a 100ms or 0.1s
             makeTCPpack(&outgoingTCPPack, Qsocket->dest.port, Qsocket->src, outgoingTCPPack.seq + 1, 1, incomingTCPpack->lastACK, FIN_ACK,  incomingTCPpack->window, tcpPayload);
             dbg(TRANSPORT_CHANNEL, "sending last ACK from Client Side\n");
-            call Sender.makePack(&outgoingPack, Qsocket->dest.addr, PROTOCOL_TCP, (uint8_t*)&outgoingTCPPack, 0, sizeof(tcp_pack));
+            call Sender.makePack(&outgoingPack,TOS_NODE_ID, Qsocket->dest.addr, PROTOCOL_TCP, (uint8_t*)&outgoingTCPPack, sizeof(tcp_pack));
             call Sender.send(outgoingPack, Qsocket->dest.addr);
             
             
@@ -400,8 +480,8 @@ implementation {
     //only used by server, changes state to LISTEN to signify ready to accept connections 
     command error_t Transport.listen(socket_t fd){
         //* @return error_t - returns SUCCESS if you are able change the state to listen else FAIL.
-       
         socket_store_t *Qsocket = call socketQueue.element(fd -1);
+        dbg(TRANSPORT_CHANNEL, "called transport.listen()\n");
 
         Qsocket->state = LISTEN;
 
@@ -421,7 +501,7 @@ implementation {
          // mySocket.dest.port = ;
          // mySocket.dest.addr = msg->src; 
         
-
+        dbg(TRANSPORT_CHANNEL, "called transport.close()\n");
         if(Qsocket->state == ESTABLISHED){
             //send fin pack the receiver does not call close() when state is established
             //SENDER 
@@ -429,7 +509,7 @@ implementation {
             //sending
             call Sender.makePack(&outgoingPack, TOS_NODE_ID, Qsocket->dest.addr, PROTOCOL_TCP, (uint8_t*)&outgoingTCPPack, sizeof(tcp_pack)); //NULL because a FIN packet has no TCP payload
             Qsocket->state = FIN_WAIT_1;
-            dbg(ROUTING_CHANNEL, "Starting close, send FIN \n");
+            dbg(TRANSPORT_CHANNEL, "Starting close, send FIN \n");
             call Sender.send(outgoingPack, Qsocket->dest.addr);
 
         //part of the teardown sequence this is when 
@@ -460,6 +540,39 @@ implementation {
     //copies from TCP buffer into Application buffer 
     command uint16_t Transport.read(socket_t fd, uint8_t *buff, uint16_t bufflen){
         //this is where the server reads packets 
+        bool isWrapped;
+        uint8_t bytesRead;
+        socket_store_t *sock = call socketQueue.element(fd - 1);
+        //can only send if established 
+        if(sock == NULL || sock->state != ESTABLISHED){
+            dbg(TRANSPORT_CHANNEL, "cannot read\n");
+            bytesRead = 0;
+            return bytesRead;
+        }
+        
+        //checking for wrapped scenario
+        if(sock->lastRead > sock->lastRcvd){
+            isWrapped = FALSE;
+        }else{
+            isWrapped = TRUE;
+        }
+        
+        //if we're not wrapped, we dont want to exceed buffersuize 
+        // if(!isWrapped){
+          
+
+        // }if(isWrapped){
+            
+                
+            
+        // }
+
+        memcpy(buff, &sock->rcvdBuff[sock->lastRead], bufflen);
+        bytesRead = bufflen;
+
+        sock->lastRead = sock->lastRead + bytesRead;
+        // sock->lastRcvd = sock->lastRcvd + 1; 
+        return bytesRead;
     }
 
     //task for processing incoming TCP packets 
@@ -486,9 +599,12 @@ implementation {
             }
             //casting to pack* so packet can be processed 
             pkt = (pack*) payload;
+            if(pkt->protocol == PROTOCOL_TCP){
+                dbg(TRANSPORT_CHANNEL, "Got TCP packet\n");
+            }
             // dbg(TRANSPORT_CHANNEL, "got packet: %p\n", pkt);
             
-            dbg(TRANSPORT_CHANNEL, "source: %d, dest: %d, protocol: %d\n", pkt->src, pkt->dest, pkt->protocol);
+            // dbg(TRANSPORT_CHANNEL, "source: %d, dest: %d, protocol: %d\n", pkt->src, pkt->dest, pkt->protocol);
             err = call Transport.receive(pkt);
             
             //release pool entry for reuse
@@ -511,5 +627,10 @@ implementation {
         }
         return raw_msg;
     }
+    
+     /* Used for other modules, disregard. */
+    event void PacketHandler.gotPing(uint8_t* incomingMsg) {}
+    event void PacketHandler.gotflood(uint8_t* incomingMsg) {}
+    event void PacketHandler.gotRouted(uint8_t* incomingMsg) {}
 
 }
