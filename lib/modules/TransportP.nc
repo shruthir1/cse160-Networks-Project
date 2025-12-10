@@ -29,7 +29,7 @@ implementation {
     uint8_t tcpPayload[TCP_PACKET_MAX_PAYLOAD_SIZE];
     
     //defining these functions at the top of the file to be used before function is defined (in case function is used before) 
-    socket_t getSocket(uint8_t destPort, uint8_t srcPort);
+    // socket_t getSocket(uint8_t destPort, uint8_t srcPort);
     socket_t getServerSocket(uint8_t destPort);
     void makeTCPpack(tcp_pack* tcpPack, uint8_t destPort, uint8_t srcPort, uint16_t seq, uint8_t ACK, uint8_t lastACK, uint8_t flags, uint8_t window, uint8_t* payload);
     void dumpPack(pack* pkt);
@@ -136,7 +136,7 @@ implementation {
     
     //obtain corresponding socket fd given destination and source ports 
     //this function is used to find socket when fd is not passed as parameter, but we have packet information 
-    socket_t getSocket (uint8_t destPort, uint8_t srcPort){
+    command socket_t Transport.getSocket (uint8_t destPort, uint8_t srcPort){
         socket_store_t *sock;
         uint16_t i = 0;
         uint16_t size = call socketQueue.size();
@@ -388,7 +388,7 @@ implementation {
         // dumpTCP(&incomingTCPpack); //this is the incoming tcp header
 
 
-        Qsocket = call socketQueue.element(getSocket(srcPort, destPort));
+        Qsocket = call socketQueue.element(call Transport.getSocket(srcPort, destPort));
         
         //HANDSHAKE: RECEIVING SYN FROM CLIENT, SENDING SYN-ACK FROM SERVER
         //state change: LISTEN -> SYN_RCVD

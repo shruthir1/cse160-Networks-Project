@@ -194,7 +194,7 @@ implementation{
 
    }
 
-   void processCommand(nx_uint8_t CMD_buffer[]){
+   void processCommand(nx_uint8_t CMD_buffer[], socket_t clientSocket){
       /*
          parse command out of server buffer, looking for white space or \r
          figure out command 
@@ -215,12 +215,16 @@ implementation{
       chatSession session;
       uint8_t username[MAX_USERNAME_LEN];
       uint8_t clientPortString[MAX_CLIENT_PORT_LEN];
+      uint8_t msgString[MAX_MSG_LEN];
       uint8_t commandString[SERVER_CMD_BUFFER_SIZE] = {0};
 
       memset(username, 0, sizeof(username));
       memset(clientPortString, 0, sizeof(clientPortString));
+      memset(msgString, 0, sizeof(msgString));
 
+     
       for(j = 0; j < SERVER_CMD_BUFFER_SIZE; j++){
+         // dbg(GENERAL_CHANNEL, "j: %d, CMD_buffer[j]: '%c'\n", j, CMD_buffer[j]);
          if(CMD_buffer[j] == '\r' || CMD_buffer[j] == ' '){
             position = j;
             break;
@@ -255,16 +259,20 @@ implementation{
             position = j;
             //finding and saving clientPort
             for( j=position +1; j<SERVER_CMD_BUFFER_SIZE; j++){
+               // dbg(GENERAL_CHANNEL, "j: %d, CMD_buffer[j]: '%c'\n", j, CMD_buffer[j]);
                if(CMD_buffer[j] == '\r'){
                   break;
                }
             }
+            // dbg(GENERAL_CHANNEL, "username: '%s'\n", username);
             dbg(GENERAL_CHANNEL, "position: %d, j: %d\n", position, j);
             strncpy(clientPortString, &CMD_buffer[position +1], j-position-1);
             dbg(GENERAL_CHANNEL, "clientPortString: '%s'\n", clientPortString);
 
             //appending into sessionList
+            // dbg(GENERAL_CHANNEL, "username: '%s'\n", username);
             strncpy(session.username, username, sizeof(username));
+            dbg(GENERAL_CHANNEL, "session.username: '%s'\n", session.username);
             session.clientPort = atoi(clientPortString);
             dbg(GENERAL_CHANNEL, "session.clientPort: %d, session.username: '%s'\n", session.clientPort, session.username);
             dbg(GENERAL_CHANNEL, "sessionList.size: %d\n", call sessionList.size());
@@ -272,10 +280,66 @@ implementation{
             dbg(GENERAL_CHANNEL, "sessionList.size after pushback: %d\n", call sessionList.size());
             break;
          case MSG_CMD:
+         //position stores the index where 'msg' ended
+            for(j = position+1; j< SERVER_CMD_BUFFER_SIZE; j++){
+               if(CMD_buffer[j] == '\r'){
+                  break;
+               }
+            }
+            strncpy(msgString, &CMD_buffer[position+1], j-position-1);
+            dbg(GENERAL_CHANNEL, "msgString: '%s', position: %d, j: %d\n", msgString, position, j);
             break;
          case WHISPER_CMD:
+         //position is where we found "whisper" cmd already
+            for( j=position +1; j<SERVER_CMD_BUFFER_SIZE; j++){
+               if(CMD_buffer[j] == ' '){
+                  break;
+               }
+            }
+            dbg(GENERAL_CHANNEL, "position: %d, j: %d\n", position, j);
+            strncpy(username, &CMD_buffer[position +1], j-position-1);
+            dbg(GENERAL_CHANNEL, "username: '%s'\n", username);
+            //updating where we want to start from in our parsing 
+            position = j;
+            //finding and saving clientPort
+            for( j=position +1; j<SERVER_CMD_BUFFER_SIZE; j++){
+               if(CMD_buffer[j] == '\r'){
+                  break;
+               }
+            }
+
+            strncpy(msgString, &CMD_buffer[position +1], j-position-1);
+            dbg(GENERAL_CHANNEL, "msgString: '%s'\n", msgString);
+
+            for(j = 0; j < call sessionList.size(); j++){
+               session = call sessionList.get(j);
+               if(strcmp(session.username, username) == 0){
+                  dbg(GENERAL_CHANNEL, "session.username: '%s'\n", session.username);
+                  /*
+                  
+                     either add client socket to chat session struct or use getSocket from transport 
+                     get socket
+                     write 
+
+                     same for broadcast, but we iterate through all client ports, no username neccesary
+
+                     
+                  */
+               }
+            }
+
             break;
-         case LISTUSR_CMD:x
+         case LISTUSR_CMD:
+            dbg(GENERAL_CHANNEL, "all connected users:\n");
+            for(j = 0; j < call sessionList.size(); j++){
+               //print all session.username and session.clientPort
+               chatSession session = call sessionList.get(j);
+               dbg(GENERAL_CHANNEL, "'%s'\n", session.username);
+               //we need to send it to the client through write()
+               //currently casuing segmenetation fault 
+               // call Transport.write(clientSocket, session.username, MAX_USERNAME_LEN);
+            }
+
             break;
       }
 
@@ -301,21 +365,30 @@ implementation{
       if(err != SUCCESS) return;          
       clientSock = call Transport.accept(sock);
       call Transport.read(clientSock, serverCMDbuffer, SERVER_CMD_BUFFER_SIZE);
-      dbg(GENERAL_CHANNEL, "initializing\n");
-      memset(serverCMDbuffer, 0, sizeof(serverCMDbuffer));
-      dbg(GENERAL_CHANNEL, "copying\n");      
-      strncpy(serverCMDbuffer, SIM_HELLO, 21);
-      dbg(GENERAL_CHANNEL, "processing\n");
-      processCommand(serverCMDbuffer);
+      //simulating and handling the different scenarios 
+      memset(serverCMDbuffer, 0, sizeof(serverCMDbuffer));      
+      strncpy(serverCMDbuffer, SIM_HELLO_1, 21);
+      processCommand(serverCMDbuffer, clientSock);
+
+      memset(serverCMDbuffer, 0, sizeof(serverCMDbuffer));      
+      strncpy(serverCMDbuffer, SIM_HELLO_2, 17);
+      processCommand(serverCMDbuffer, clientSock);
+
+      memset(serverCMDbuffer, 0, sizeof(serverCMDbuffer));      
+      strncpy(serverCMDbuffer, SIM_HELLO_3, 18);
+      processCommand(serverCMDbuffer, clientSock);
+
       memset(serverCMDbuffer, 0, sizeof(serverCMDbuffer));
       strncpy(serverCMDbuffer, SIM_BROADCAST, 20);
-      processCommand(serverCMDbuffer);
+      processCommand(serverCMDbuffer, clientSock);
+
       memset(serverCMDbuffer, 0, sizeof(serverCMDbuffer));
       strncpy(serverCMDbuffer, SIM_WHISPER, 26);
-      processCommand(serverCMDbuffer);
+      processCommand(serverCMDbuffer, clientSock);
+
       memset(serverCMDbuffer, 0, sizeof(serverCMDbuffer));
       strncpy(serverCMDbuffer, SIM_LISTUSR, 11);
-      processCommand(serverCMDbuffer);
+      processCommand(serverCMDbuffer, clientSock);
 
       /*
          copy into server command buffer SIM_HELLO
