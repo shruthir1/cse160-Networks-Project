@@ -26,7 +26,10 @@ def main():
     s.setAppServer();
     s.runTime(60);
 
-    s.setAppClient(3);
+    s.setAppClient(3, 3);
+    s.runTime(1);
+    s.runTime(1000);
+    s.setAppClient(5, 5);
     s.runTime(1);
     s.runTime(1000);
 

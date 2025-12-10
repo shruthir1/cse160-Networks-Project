@@ -39,8 +39,12 @@ class TestSim:
     # Personal Debuggin Channels for some of the additional models implemented.
     HASHMAP_CHANNEL="hashmap"
 
+    # Project 4
+    SERVER_ADDRESS=1
+
     # Initialize Vars
     numMote=0
+
 
     def __init__(self):
         self.t = Tossim([])
@@ -178,11 +182,11 @@ class TestSim:
         return
 
     def setAppServer(self):
-        self.sendCMD(self.CMD_SET_APP_SERVER, 1, "set app server" )
+        self.sendCMD(self.CMD_SET_APP_SERVER, self.SERVER_ADDRESS, "" )
 
 
-    def setAppClient(self, clientPort):
-        self.sendCMD(self.CMD_SET_APP_CLIENT, 4, "set app client" )
+    def setAppClient(self, clientPort, clientAddress):
+        self.sendCMD(self.CMD_SET_APP_CLIENT, clientAddress, "{0}".format(chr(clientPort)))
 
 
     def addChannel(self, channelName, out=sys.stdout):

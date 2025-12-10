@@ -84,7 +84,7 @@ implementation{
                 case CMD_SET_APP_CLIENT:
                     dbg(COMMAND_CHANNEL, "Command Type: set app client\n");
                     //hard coded for now
-                    signal CommandHandler.setAppClient(3);
+                    signal CommandHandler.setAppClient(buff[0]);
                     break;
 
                 case CMD_SET_APP_SERVER:

@@ -6,6 +6,8 @@
  * @date   2013/09/03
  *
  */
+#include <string.h>
+#include <stdlib.h> 
 #include <Timer.h>
 #include "includes/command.h"
 #include "includes/packet.h"
@@ -192,6 +194,93 @@ implementation{
 
    }
 
+   void processCommand(nx_uint8_t CMD_buffer[]){
+      /*
+         parse command out of server buffer, looking for white space or \r
+         figure out command 
+         switch(command):
+            case hello
+               username, clientPort into sessionList
+            case whisper
+               
+            case msg 
+               
+            case listusr
+               print all users from sessionList
+      
+      */
+      uint8_t position;
+      uint8_t action;
+      uint8_t j; 
+      chatSession session;
+      uint8_t username[MAX_USERNAME_LEN];
+      uint8_t clientPortString[MAX_CLIENT_PORT_LEN];
+      uint8_t commandString[SERVER_CMD_BUFFER_SIZE] = {0};
+
+      memset(username, 0, sizeof(username));
+      memset(clientPortString, 0, sizeof(clientPortString));
+
+      for(j = 0; j < SERVER_CMD_BUFFER_SIZE; j++){
+         if(CMD_buffer[j] == '\r' || CMD_buffer[j] == ' '){
+            position = j;
+            break;
+         }
+      }
+
+
+      strncpy(commandString, CMD_buffer, position);
+      if(strcmp(commandString, HELLO_STR) == 0){
+         action = HELLO_CMD;
+      }else if(strcmp(commandString, MSG_STR) == 0){
+         action = MSG_CMD;
+      }else if(strcmp(commandString, WHISPER_STR) ==0){
+         action = WHISPER_CMD;
+      }else if(strcmp(commandString, LISTUSR_STR) ==0){
+         action = LISTUSR_CMD;
+      }
+
+      dbg(GENERAL_CHANNEL, "commandString: '%s', action: %d, CMD_buffer: '%s', position: %d\n", commandString, action, CMD_buffer, position);
+      switch(action){
+         case HELLO_CMD:
+            //finding and saving username 
+            for( j=position +1; j<SERVER_CMD_BUFFER_SIZE; j++){
+               if(CMD_buffer[j] == ' '){
+                  break;
+               }
+            }
+            dbg(GENERAL_CHANNEL, "position: %d, j: %d\n", position, j);
+            strncpy(username, &CMD_buffer[position +1], j-position-1);
+            dbg(GENERAL_CHANNEL, "username: '%s'\n", username);
+            //updating where we want to start from in our parsing 
+            position = j;
+            //finding and saving clientPort
+            for( j=position +1; j<SERVER_CMD_BUFFER_SIZE; j++){
+               if(CMD_buffer[j] == '\r'){
+                  break;
+               }
+            }
+            dbg(GENERAL_CHANNEL, "position: %d, j: %d\n", position, j);
+            strncpy(clientPortString, &CMD_buffer[position +1], j-position-1);
+            dbg(GENERAL_CHANNEL, "clientPortString: '%s'\n", clientPortString);
+
+            //appending into sessionList
+            strncpy(session.username, username, sizeof(username));
+            session.clientPort = atoi(clientPortString);
+            dbg(GENERAL_CHANNEL, "session.clientPort: %d, session.username: '%s'\n", session.clientPort, session.username);
+            dbg(GENERAL_CHANNEL, "sessionList.size: %d\n", call sessionList.size());
+            call sessionList.pushback(session);
+            dbg(GENERAL_CHANNEL, "sessionList.size after pushback: %d\n", call sessionList.size());
+            break;
+         case MSG_CMD:
+            break;
+         case WHISPER_CMD:
+            break;
+         case LISTUSR_CMD:x
+            break;
+      }
+
+   }
+
    event void CommandHandler.setAppServer(){
       socket_t sock; 
       socket_t clientSock;
@@ -212,21 +301,36 @@ implementation{
       if(err != SUCCESS) return;          
       clientSock = call Transport.accept(sock);
       call Transport.read(clientSock, serverCMDbuffer, SERVER_CMD_BUFFER_SIZE);
+      dbg(GENERAL_CHANNEL, "initializing\n");
+      memset(serverCMDbuffer, 0, sizeof(serverCMDbuffer));
+      dbg(GENERAL_CHANNEL, "copying\n");      
+      strncpy(serverCMDbuffer, SIM_HELLO, 21);
+      dbg(GENERAL_CHANNEL, "processing\n");
+      processCommand(serverCMDbuffer);
+      memset(serverCMDbuffer, 0, sizeof(serverCMDbuffer));
+      strncpy(serverCMDbuffer, SIM_BROADCAST, 20);
+      processCommand(serverCMDbuffer);
+      memset(serverCMDbuffer, 0, sizeof(serverCMDbuffer));
+      strncpy(serverCMDbuffer, SIM_WHISPER, 26);
+      processCommand(serverCMDbuffer);
+      memset(serverCMDbuffer, 0, sizeof(serverCMDbuffer));
+      strncpy(serverCMDbuffer, SIM_LISTUSR, 11);
+      processCommand(serverCMDbuffer);
+
       /*
-         parse command out of server buffer, looking for white space or \r
-         figure out command 
-         switch(command):
-            case hello
-               username, clientPort into sessionList
-            case whisper
-               
-            case msg 
-               
-            case listusr
-               print all users from sessionList
+         copy into server command buffer SIM_HELLO
+         processCommand(serverCMDbuffer)
+         copy into server command buffer SIM_BROADCAST
+         processCommand(serverCMDbuffer)
+         copy into server command buffer SIM_WHISPER
+         processCommand(serverCMDbuffer)
+         copy into server command buffer SIM_LISTUSR
+         processCommand(serverCMDbuffer)
+      
       
       */
-
+      
+      
 
    }
 
@@ -237,6 +341,7 @@ implementation{
       error_t err;
       nx_uint8_t clientbuffer[CLIENT_CMD_BUFFER_SIZE];
       dbg(GENERAL_CHANNEL, "APP CLIENT EVENT\n");
+      dbg(GENERAL_CHANNEL, "clientPort: %d\n", clientPort);
       sock = call Transport.socket();
       addr.addr = TOS_NODE_ID;
       addr.port = clientPort;

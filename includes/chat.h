@@ -3,9 +3,22 @@
 
 #include "socket.h"
 
+
+#define SIM_HELLO "hello shruthir 6\r\n"  
+#define SIM_WHISPER "whisper shruthir, hi!\r\n" 
+#define SIM_BROADCAST "msg hello world\r\n" 
+#define SIM_LISTUSR "listusr\r\n" 
+#define HELLO_STR "hello"
+#define MSG_STR "msg"
+#define WHISPER_STR "whisper"
+#define LISTUSR_STR "listusr"
+
+
+
 enum{
     MAX_NUM_OF_CHAT_CLIENTS = 11,
     MAX_USERNAME_LEN = 20,
+    MAX_CLIENT_PORT_LEN = 3,
     SERVER_LISTEN_PORT = 41,
     SERVER_ADDRESS = 1,
     CLIENT_CMD_BUFFER_SIZE = 50,
