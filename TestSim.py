@@ -185,8 +185,8 @@ class TestSim:
         self.sendCMD(self.CMD_SET_APP_SERVER, self.SERVER_ADDRESS, "" )
 
 
-    def setAppClient(self, clientPort, clientAddress):
-        self.sendCMD(self.CMD_SET_APP_CLIENT, clientAddress, "{0}".format(chr(clientPort)))
+    def setAppClient(self, clientPort, clientAddress, username):
+        self.sendCMD(self.CMD_SET_APP_CLIENT, clientAddress, "{0}{1}".format(chr(clientPort), username))
 
 
     def addChannel(self, channelName, out=sys.stdout):

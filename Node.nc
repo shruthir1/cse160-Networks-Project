@@ -213,6 +213,7 @@ implementation{
       uint8_t action;
       uint8_t j; 
       chatSession session;
+      socket_t sock;
       uint8_t username[MAX_USERNAME_LEN];
       uint8_t clientPortString[MAX_CLIENT_PORT_LEN];
       uint8_t msgString[MAX_MSG_LEN];
@@ -288,6 +289,15 @@ implementation{
             }
             strncpy(msgString, &CMD_buffer[position+1], j-position-1);
             dbg(GENERAL_CHANNEL, "msgString: '%s', position: %d, j: %d\n", msgString, position, j);
+            
+            for(j = 0; j < call sessionList.size(); j++){
+                session = call sessionList.get(j);
+                sock = call Transport.getSocket(session.clientPort, SERVER_LISTEN_PORT);
+                dbg(GENERAL_CHANNEL, "got clientSocket: %d\n", sock);
+               //  call Transport.write(sock, msgString, MAX_MSG_LEN); // we are sending their username and msg back 
+                dbg(GENERAL_CHANNEL, "broadcasting msg to user: '%s'\n", session.username);
+            }
+
             break;
          case WHISPER_CMD:
          //position is where we found "whisper" cmd already
@@ -301,7 +311,7 @@ implementation{
             dbg(GENERAL_CHANNEL, "username: '%s'\n", username);
             //updating where we want to start from in our parsing 
             position = j;
-            //finding and saving clientPort
+            //finding msg
             for( j=position +1; j<SERVER_CMD_BUFFER_SIZE; j++){
                if(CMD_buffer[j] == '\r'){
                   break;
@@ -315,6 +325,10 @@ implementation{
                session = call sessionList.get(j);
                if(strcmp(session.username, username) == 0){
                   dbg(GENERAL_CHANNEL, "session.username: '%s'\n", session.username);
+                  sock = call Transport.getSocket(session.clientPort, SERVER_LISTEN_PORT);
+                  dbg(GENERAL_CHANNEL, "got clientSocket: %d\n", sock);
+                  // call Transport.write(sock, msgString, MAX_MSG_LEN); // we are sending their username and msg back 
+                  
                   /*
                   
                      either add client socket to chat session struct or use getSocket from transport 
@@ -349,6 +363,7 @@ implementation{
       socket_t sock; 
       socket_t clientSock;
       socket_addr_t addr;
+      socket_addr_t destAddr;
       error_t err;
       nx_uint8_t serverCMDbuffer[SERVER_CMD_BUFFER_SIZE];
       dbg(GENERAL_CHANNEL, "APP SERVER EVENT\n");
@@ -364,16 +379,24 @@ implementation{
       //implement error handle
       if(err != SUCCESS) return;          
       clientSock = call Transport.accept(sock);
+      destAddr.port = 6;
+      call Transport.setDestPort(clientSock, &destAddr);
       call Transport.read(clientSock, serverCMDbuffer, SERVER_CMD_BUFFER_SIZE);
       //simulating and handling the different scenarios 
       memset(serverCMDbuffer, 0, sizeof(serverCMDbuffer));      
       strncpy(serverCMDbuffer, SIM_HELLO_1, 21);
       processCommand(serverCMDbuffer, clientSock);
 
+      clientSock = call Transport.accept(sock);
+      destAddr.port = 10;
+      call Transport.setDestPort(clientSock, &destAddr);
       memset(serverCMDbuffer, 0, sizeof(serverCMDbuffer));      
       strncpy(serverCMDbuffer, SIM_HELLO_2, 17);
       processCommand(serverCMDbuffer, clientSock);
 
+      clientSock = call Transport.accept(sock);
+      destAddr.port = 8;
+      call Transport.setDestPort(clientSock, &destAddr);
       memset(serverCMDbuffer, 0, sizeof(serverCMDbuffer));      
       strncpy(serverCMDbuffer, SIM_HELLO_3, 18);
       processCommand(serverCMDbuffer, clientSock);
@@ -407,14 +430,14 @@ implementation{
 
    }
 
-   event void CommandHandler.setAppClient(uint8_t clientPort){
+   event void CommandHandler.setAppClient(uint8_t clientPort, uint8_t* username){
       socket_t sock; 
       socket_addr_t addr;
       socket_addr_t serverAddr;
       error_t err;
       nx_uint8_t clientbuffer[CLIENT_CMD_BUFFER_SIZE];
       dbg(GENERAL_CHANNEL, "APP CLIENT EVENT\n");
-      dbg(GENERAL_CHANNEL, "clientPort: %d\n", clientPort);
+      dbg(GENERAL_CHANNEL, "clientPort: %d, username: '%s'\n", clientPort, username);
       sock = call Transport.socket();
       addr.addr = TOS_NODE_ID;
       addr.port = clientPort;
@@ -426,6 +449,26 @@ implementation{
      serverAddr.addr = SERVER_ADDRESS;
      serverAddr.port = SERVER_LISTEN_PORT;
      err = call Transport.connect(sock, &serverAddr);
+     
+     /* can have a sort of global username Array instead of parameter 
+
+      construct a hello message based on clientPort and username
+      write to serverSock
+
+      construct a whisper based on hardcoded username 
+      write() to serverSock 
+      read() server reply if meant for use (use strcmp with username and hardcode)
+
+      construct a broadcast 
+      write msg to socket
+      read() broadcasted reply 
+
+      construct listusr
+      write listusr to socket 
+      read() server reply 
+     
+     */
+    
      
    }
 }

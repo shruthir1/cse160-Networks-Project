@@ -148,4 +148,6 @@ interface Transport{
    command error_t listen(socket_t fd);
 
    command socket_t getSocket (uint8_t destPort, uint8_t srcPort);
+
+   command error_t setDestPort(socket_t fd, socket_addr_t *addr);
 }

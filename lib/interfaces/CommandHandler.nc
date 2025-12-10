@@ -10,5 +10,5 @@ interface CommandHandler{
    event void setTestServer(uint16_t address, uint8_t port);
    event void setTestClient(uint16_t destination, uint8_t srcPort, uint8_t destPort, uint16_t transferCount);
    event void setAppServer();
-   event void setAppClient(uint8_t clientPort);
+   event void setAppClient(uint8_t clientPort, uint8_t* username);
 }

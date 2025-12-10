@@ -140,9 +140,11 @@ implementation {
         socket_store_t *sock;
         uint16_t i = 0;
         uint16_t size = call socketQueue.size();
-
-        for(i = 0; i < size-1; i++){
+        dbg(TRANSPORT_CHANNEL, "getSocket() was called with parameters destPort: %d, srcPort: %d\n", destPort, srcPort);
+        dbg(TRANSPORT_CHANNEL, "socketQueue.size: %d\n", size);
+        for(i = 0; i < size; i++){
              sock = call socketQueue.element(i);
+             dbg(TRANSPORT_CHANNEL, "getSocket() called, sock->dest.port: %d, sock->src: %d\n", sock->dest.port, sock->src);
             if(sock->dest.port == destPort && sock->src == srcPort){
                 return i;
             }
@@ -214,6 +216,35 @@ implementation {
         
     }
 
+    //this is the work-around for accept since we are unable to receive packets
+     command error_t Transport.setDestPort(socket_t fd, socket_addr_t *addr){  
+        //get() is giving a copy of whats in the list by using a pointer we're able to interact what whats directly in the list (and change it)
+        socket_store_t *mySocket;
+        dbg(TRANSPORT_CHANNEL, "setDestPort()\n");
+        // dbg(TRANSPORT_CHANNEL, "fd: %d\n", fd);
+        if(fd <= 0 || fd > call socketQueue.size() || addr == NULL){
+            dbg(TRANSPORT_CHANNEL, "invalid parameter\n");
+            return FAIL;
+        }
+        // dbg(TRANSPORT_CHANNEL, "socketQueue.size() = %d\n", call socketQueue.size());
+        mySocket = call socketQueue.element(fd-1);
+        //err handling 
+        if(mySocket == NULL){
+            dbg(TRANSPORT_CHANNEL, "socket was invalid\n");
+            return FAIL;
+        }
+        dbg(TRANSPORT_CHANNEL, "mySocket: %p\n", mySocket);
+        //only use arrows on pointer vars 
+        dbg(TRANSPORT_CHANNEL, "mySocket.src before: %d, addr->port: %d\n", mySocket->src, addr->port);
+        mySocket->dest.port = addr->port;
+        // dbg(TRANSPORT_CHANNEL, "mySocket.src after: %d\n", mySocket->src);
+        dumpSocket(mySocket);
+        //mySocket.state does not change on bind()
+
+        return SUCCESS;
+        
+    }
+
     
     command socket_t Transport.accept(socket_t fd){
         /* * @return socket_t - returns a new socket if the connection is
@@ -221,10 +252,22 @@ implementation {
          a destination associated with the destination address and port.
         if not return a null socket.
         */
+        socket_store_t * sockStore; //this is on the stack scope does not extend after function ends
         dbg(TRANSPORT_CHANNEL, "accept()\n");
+        sockStore = call socketPool.get(); //similar to malloc()
+        sockStore->state = ESTABLISHED;
+        sockStore->flag = 255;
+        sockStore->src = 41;
+        sockStore->dest.port = 255;
+        sockStore->dest.addr = 255;
+        // dbg(TRANSPORT_CHANNEL, "fd before enqueue: %d\n", call socketQueue.size());
+        dumpSocket(sockStore);
+        call socketQueue.enqueue(sockStore);
+        dbg(TRANSPORT_CHANNEL, "socketQueue.size: %d\n", call socketQueue.size());
         //going to be signaled from Transport.recieve();
         //basically needs to return a newly connected socket 
-
+        
+        return call socketQueue.size();
 
     }
     
