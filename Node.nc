@@ -8,6 +8,7 @@
  */
 #include <string.h>
 #include <stdlib.h> 
+#include <stdio.h>
 #include <Timer.h>
 #include "includes/command.h"
 #include "includes/packet.h"
@@ -450,24 +451,40 @@ implementation{
      serverAddr.port = SERVER_LISTEN_PORT;
      err = call Transport.connect(sock, &serverAddr);
      
-     /* can have a sort of global username Array instead of parameter 
+     //HELLO CASE
+     sprintf(clientbuffer, "hello %s %d\r\n", username, clientPort);
+     call Transport.write(sock, clientbuffer, CLIENT_CMD_BUFFER_SIZE); 
 
-      construct a hello message based on clientPort and username
-      write to serverSock
+     //MSG CASE
+     memset(clientbuffer, 0, sizeof(clientbuffer));
+     sprintf(clientbuffer, "msg hello world!\r\n");
+     call Transport.write(sock, clientbuffer, CLIENT_CMD_BUFFER_SIZE); 
+     memset(clientbuffer, 0, sizeof(clientbuffer));
+     //can use the same buffer here because when we do the write() we write out of the application buffer into tcp buffer
+     //READ SERVER REPLY
+     call Transport.read(sock, clientbuffer, CLIENT_CMD_BUFFER_SIZE);
+     dbg(GENERAL_CHANNEL, "clientbuffer after msg broadcast: %s\n", clientbuffer);
 
-      construct a whisper based on hardcoded username 
-      write() to serverSock 
-      read() server reply if meant for use (use strcmp with username and hardcode)
-
-      construct a broadcast 
-      write msg to socket
-      read() broadcasted reply 
-
-      construct listusr
-      write listusr to socket 
-      read() server reply 
+     //WHISPER CASE 
+     memset(clientbuffer, 0, sizeof(clientbuffer));
+     sprintf(clientbuffer, "whisper shruthir hi!\r\n");
+     call Transport.write(sock, clientbuffer, CLIENT_CMD_BUFFER_SIZE); 
+     memset(clientbuffer, 0, sizeof(clientbuffer));
+     //READ SERVER REPLY
+     if(strcmp(username, "shruthir") == 0){
+      //we only do a read if meant for our username 
+      call Transport.read(sock, clientbuffer, CLIENT_CMD_BUFFER_SIZE);
+      dbg(GENERAL_CHANNEL, "clientbuffer after whisper reply: %s\n", clientbuffer); 
+     }
      
-     */
+     //LISTUSR CASE
+     memset(clientbuffer, 0, sizeof(clientbuffer));
+     sprintf(clientbuffer, "listusr\r\n");
+     call Transport.write(sock, clientbuffer, CLIENT_CMD_BUFFER_SIZE); 
+     memset(clientbuffer, 0, sizeof(clientbuffer));
+     //no if statement needed here because server will broadcast to all usernames 
+     call Transport.read(sock, clientbuffer, CLIENT_CMD_BUFFER_SIZE);
+     dbg(GENERAL_CHANNEL, "clientbuffer after listusr request: %s\n", clientbuffer);
     
      
    }

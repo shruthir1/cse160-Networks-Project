@@ -292,10 +292,12 @@ implementation {
         pack * sendPack;
 
         //socket we are writing from 
-        socket_store_t *Qsocket = call socketQueue.element(fd);
+        socket_store_t *Qsocket = call socketQueue.element(fd-1);
         
-        dbg(TRANSPORT_CHANNEL, "write()");
-        if(Qsocket->state != ESTABLISHED) return 0; //all other states indicated we are still in handshake 
+        dbg(TRANSPORT_CHANNEL, "write()\n");
+        dbg(TRANSPORT_CHANNEL, "Qsocket: %p\n", Qsocket);
+        dbg(TRANSPORT_CHANNEL, "Socket State: %s\n", socketState(Qsocket->state));
+        // if(Qsocket->state != ESTABLISHED) return 0; //all other states indicated we are still in handshake 
         if(Qsocket->lastWritten < Qsocket->lastAck){
             isWrapped = TRUE; 
         } else{
@@ -303,9 +305,10 @@ implementation {
         } 
 
         //if pool is empty then we dont have data to send, sendPool stores all the packets we want to send 
-        if(! call sendPool.empty()) return 0;
+        // if(! call sendPool.empty()) return 0;
 
         sendPack = call sendPool.get(); 
+        dbg(TRANSPORT_CHANNEL, "sendPack %p\n", sendPack);
 
 
         if(!isWrapped){
@@ -586,12 +589,13 @@ implementation {
         bool isWrapped;
         uint8_t bytesRead;
         socket_store_t *sock = call socketQueue.element(fd - 1);
+        dbg(TRANSPORT_CHANNEL, "read()\n");
         //can only send if established 
-        if(sock == NULL || sock->state != ESTABLISHED){
-            dbg(TRANSPORT_CHANNEL, "cannot read\n");
-            bytesRead = 0;
-            return bytesRead;
-        }
+        // if(sock == NULL || sock->state != ESTABLISHED){
+        //     dbg(TRANSPORT_CHANNEL, "cannot read\n");
+        //     bytesRead = 0;
+        //     return bytesRead;
+        // }
         
         //checking for wrapped scenario
         if(sock->lastRead > sock->lastRcvd){
@@ -612,7 +616,7 @@ implementation {
 
         memcpy(buff, &sock->rcvdBuff[sock->lastRead], bufflen);
         bytesRead = bufflen;
-
+        dbg(TRANSPORT_CHANNEL, "bytesRead: %d\n", bytesRead);
         sock->lastRead = sock->lastRead + bytesRead;
         // sock->lastRcvd = sock->lastRcvd + 1; 
         return bytesRead;

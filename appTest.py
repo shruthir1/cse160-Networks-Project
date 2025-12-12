@@ -32,6 +32,12 @@ def main():
     s.setAppClient(5, 5, "acerpa");
     s.runTime(1);
     s.runTime(1000);
+    s.setAppClient(8, 8, "asmaglov");
+    s.runTime(1);
+    s.runTime(1000);
+    s.setAppClient(7, 7, "asakitty");
+    s.runTime(1);
+    s.runTime(1000);
 
 if __name__ == '__main__':
     main()
